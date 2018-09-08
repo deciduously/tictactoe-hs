@@ -13,16 +13,16 @@ newtype Board = Board [Maybe Player]
 data Player = Human | Computer deriving (Eq, Show)
 
 instance Show Board where
-  show (Board cs) = foldr spaceEachThird [].withIndicesFrom 1.fmap showCell $ cs
+  show (Board cs) = foldr spaceEachThird [].withIndicesFrom 1.fmap showCell $ withIndicesFrom 1 cs
     where spaceEachThird a = (++) (bool (snd a) (snd a ++ "\n") (fst a `rem` 3 == 0))
 
 withIndicesFrom :: Int -> [a] -> [(Int, a)]
 withIndicesFrom n = zip [n..]
 
-showCell :: Maybe Player -> String
-showCell Nothing         = " _ "
-showCell (Just Human)    = " X "
-showCell (Just Computer) = " O "
+showCell :: (Int, Maybe Player) -> String
+showCell (n, Nothing)         = " " ++ show n ++ " "
+showCell (_, (Just Human))    = " X "
+showCell (_, (Just Computer)) = " O "
 
 freshBoard :: Board
 freshBoard = Board $ replicate 9 Nothing
@@ -92,4 +92,3 @@ main :: IO ()
 main = do
   let board = freshBoard
   runGame board
-
