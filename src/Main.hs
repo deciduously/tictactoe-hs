@@ -37,7 +37,9 @@ compTurn :: Board -> IO Board
 compTurn board@(Board b) = do
   let options = filter (isNothing.snd).withIndicesFrom 1 $ b
   r <- randomRIO (0, length options - 1)
-  let b2 = playCell board (fst $ options !! r) Computer
+  let play = (fst $ options !! r)
+  let b2 = playCell board play Computer
+  putStrLn $ "Computer plays " ++ show play
   checkWin b2 Computer
   return b2
 
