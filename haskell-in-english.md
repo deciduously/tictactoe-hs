@@ -24,25 +24,47 @@ I do not remember how this thing works (or much of how Haskell works), so I'm go
 This is a dirt simple TicTacToe game played on the command line against a randomly playing computer opponent.  Fun, right?  Hours, nay, DAYS of entertainment await.  A project like this is usually my go-to "hello world" in a new language, because at the end it demonstrates you can leverage the language's various facilities at least a little, like control flow and IO and overall structure.  For Haskell, it was more a "TTFN, world", but the point stands.  The full source can be found [here](https://github.com/deciduously/tictactoe-hs/blob/master/src/Main.hs), the entirety of which will appear in snippet-form below.
 
 Here's a sample game:
+
 ```
+*Main> main
  1  2  3
  4  5  6
  7  8  9
- 
-Your move: 3
- 1  O  X
+
+Your move: 2
+Computer plays 9
+ 1  X  3
  4  5  6
- 7  8  9
+ 7  8  O
+
+Your move: 1
+Computer plays 8
+ X  X  3
+ 4  5  6
+ 7  O  O
+
+Your move: 6
+Computer plays 3
+ X  X  O
+ 4  5  X
+ 7  O  O
+
+Your move: 37
+Only one digit allowed!
+ X  X  O
+ 4  5  X
+ 7  O  O
+
+Your move: 4
+Computer plays 5
+ X  X  O
+ X  O  X
+ 7  O  O
 
 Your move: 7
- 1  O  X
- 4  5  6
- X  O  9
- 
- Your move: 5
- 1  O  X
- 4  X  6
- X  O  9
+ X  X  O
+ X  O  X
+ X  O  O
 
 Human won!
 ```
@@ -114,9 +136,9 @@ newtype Board = Board [Maybe Player]
 data Player = Human | Computer deriving (Eq, Show)
 ```
 
-And there you have it.  The brackets around `Maybe Player` mean that it's a list of `Maybe Player.`.  Obvious, right?  I'm joking, I'll talk about it.  A `Maybe` is a useful type allowing you to encode the concept of nullablillity into the type system, instead of as a `null` value that can get thrown around.  Similar concepts appear in other ML-ish languages (Haskell is ML-ish) like Rust and Swift (and OCaml and Scala and F# and SML and etc, etc - it's not a new or Haskell-specific concept is the point here).  A `Maybe` can either be `Nothing` or a `Just <something>`, in our case a `Player` from the type.  `Maybe Player` is actually also a type - `Maybe` is a *higher-kinded type* meaning it can be (nay, WILL be!  MUST be!) parameterized with a type.  Without a type parameter, `Maybe` is not a complete, usable type at all - every `Maybe` will carry a specific type.  `Maybe` has *kind* `* -> *`, meaning a mapping from something to something, and when `Player` is that `*` something type, it becomes the fully resolved type `Maybe Player`, with *kind* `*` that can be fully evaluated in other functions in our quest for the One True Value.  Remember earlier when I called the compiler magic?  It goes further... `Either`, which is *kind* `* -> * -> *`takes two type-level arguments, can (and does) create curried types by only supplying one parameter!  For example `Either Player` is a partially resolved type that still has kind `* -> *`.  These are *type-level functions*.  It's cool stuff.
+And there you have it.  The brackets around `Maybe Player` mean that it's a list of `Maybe Player.`.  Obvious, right?  I'm joking, I'll talk about it.  A `Maybe` is a useful type allowing you to encode the concept of nullablillity into the type system, instead of as a `null` value that can get thrown around.  Similar concepts appear in other languages like Rust and Swift (and OCaml and Scala and F# and SML and Elm and etc, etc - it's not a new or Haskell-specific concept is the point here).  A `Maybe` can either be `Nothing` or a `Just <something>`, in our case a `Player` from the type.  `Maybe Player` is actually also a type - `Maybe` is a *higher-kinded type* meaning it can be (nay, WILL be!  MUST be!) parameterized with a type.  The word `kind` here refers to *how many layers* of parametrization this type requires.  Without a type parameter, `Maybe` is not a complete, usable type at all - every `Maybe` will carry a specific type.  `Maybe` has *kind* `* -> *`, meaning a mapping from something to something, and when `Player` is that `*` something type, it becomes the fully resolved type `Maybe Player`, with *kind* `*` that can be fully evaluated in other functions in our quest for the One True Value.  Remember earlier when I called the compiler magic?  It goes further... `Either`, which is *kind* `* -> * -> *`takes two type-level arguments, can (and does) create curried types by only supplying one parameter!  For example `Either Player` is a partially resolved type that still has kind `* -> *`.  These are *type-level functions*.  It's cool stuff, but not important for this program.
 
-Alright, armed with that knowledge, we can take a look at `Board $ replicate 9 nothing`.  This is nice and neat in that even though it looks a little incantation-y, it's got a nice English ring to it.  It's almost like reading a sentence, or at least pseudocode.  You'll want to know, going forward, about `$` - this is just function application with different precedence/associatvity rules.  Its `Board(replicate 9 nothing)`.  It seems redundant at first, but the low precedence and right-associativity let you omit parens: `f $ g $ h x  =  f (g (h x))`[5].  It looks funky but if I recall it felt natural pretty quickly.  Buckle up, because there's a little more token soup below.  Haskell is not shy about esoteric operators.
+Alright, armed with at least some of that knowledge, we can take a look at `Board $ replicate 9 nothing`.  This is nice and neat in that even though it looks a little incantation-y, it's got a nice English ring to it.  It's almost like reading a sentence, or at least pseudocode.  You'll want to know, going forward, about `$` - this is just function application with different precedence/associatvity rules.  Its `Board(replicate 9 nothing)`.  It seems redundant at first, but the low precedence and right-associativity let you omit parens: `f $ g $ h x  =  f (g (h x))`[5].  It looks funky but if I recall it felt natural pretty quickly.  Buckle up, because there's a little more token soup below.  Haskell is not shy about esoteric operators.
 
 `replicate 9 nothing` isn't too hard to tease apart.  Function application is just spaces in Haskell (it's a function-oriented language, after all), so we're calling `replicate` with the arguments `9` and `Nothing`.  And `Board` wanted a list of `Maybe Player`s.  `replicate` makes uses the first argument to decide how many "replicas" of the 2nd to make, and returns them as a list.  Which is what we said a `Board` held. Ok, cool, so a `freshBoard` is a `Board` has nine cells that *can* hold a `Player`, but don't currently.  That's the whole data structure for the app.  We get a lot of guarantees for free at compile time already from the definition- definitely more than your average vector or array.
 
@@ -179,35 +201,35 @@ For union types like `Player`, we can tell the compiler to assume we just want t
 
 ```haskell
 instance Show Board where
-  show (Board cs) = foldr spaceEachThird [].withIndicesFrom 1.fmap showCell $ cs
+  show (Board cs) = foldr spaceEachThird [].withIndicesFrom 1.fmap showCell $ withIndicesFrom 1 cs
     where spaceEachThird a = (++) (bool (snd a) (snd a ++ "\n") (fst a `rem` 3 == 0))
 ```
 
-My god, Ben, what have you written.  This should be good.  Lets tease this apart.  That first list just says we're defining what `Show` should do for `Board`.  So every time a caller needs to `Show` a board, it will come here and evaluate what's inside.
+My god, Ben, what have you written.  This should be good.  Or perhaps terrible.  Lets tease this apart.  That first list just says we're defining what `Show` should do for `Board`.  So every time a caller needs to `Show` a board (with `show` the function, for example, or indirectly via a call to `putStr`), it will come here and evaluate what's inside.
 
 To define a typeclass instance, you need to define the functions the typeclass requires.  `Show` is an easy one to define - there's just the one, `show a`, where in this case `a` will be `Board`.  And as you'd expect, we can see the left half of the definition agrees: this function will `show (Board cs)`, so if we pass in ur `Board` newtype, `cs` will refer to the list of cells inside.
 
 Luckily, Past Ben seems to have golfed this one, the bastard.  No comments or anything.  To be fair, I don't think Past Ben expected Present Ben (Future Ben?) to write this post, ansd Haskell is a lot of fun to golf.  No matter.  That first function, `foldr`, gives me an idea what I'm getting at already.  Lets talk about folding.
 
-So, this whole time we've been talking about Haskell is *functional* and not *imperative* - the unit of computation is the function, and you construct computations by composing functions.  However, I immediately threw that `do` thing at you which does kinda-sorta let you code imperatively, but that's still just a special syntax for describing a purely functional set of computations.  We're going to run in to a problem if we want to, say, perform the same action on a list of things.  Which is exactly what needs to happen.
+I've been talking about how Haskell is *functional* and not *imperative* - the unit of computation is the function, and you construct computations by composing functions.  However, I immediately threw that `do` thing at you which does kinda-sorta let you code imperatively, but that's still just a special syntax for describing a purely functional set of computations.  We're going to run in to a problem if we want to, say, perform the same action on a list of things.  Which is exactly what needs to happen, and monads won't help us now.
 
-In a C-style language, to solve this problem of printing each cell to the screen, you'd iterate over the cells with something like a `for` loop.  In Haskell, ther'es no such thing.  A loop isn't a function or a value, and those comprise our whole toolbox.  But we still have to solve this problem.  Luckily Haskell provides a rich set of tools for approaching this type of problem functionally using *recursion*, and the `fold` operation is a building block that makes this easier than writing it out by hand.
+In a C-style language, to solve this problem of printing each cell to the screen, you'd iterate over the cells with something like a `for` loop.  In Haskell, there's no such thing.  A loop isn't a function or a value, and those comprise our whole toolbox.  But we still have to solve this problem.  Luckily Haskell provides a rich set of tools for approaching this type of problem functionally using *recursion*, and the `fold` operation is a building block that makes this easier than writing it out by hand.
 
 By the way, this whole bit is not at all Haskell specific.  Recursion and folds will show up in all sorts of places, Haskell just happens to be an excellent evirnoment for really getting familiar with how to build them.
 
 #### A Digression on `foldr`
 
-Folds are not an uncommon concept in mainstream languages - if you're already god and comfy with them, feel free to skip this.  If not, though, it will help to know how they work.
+Folds are not an uncommon concept in mainstream languages - if you're already good and comfy with them, feel free to skip this whole bit.  If not, though, it will help to know how they work.
 
 The way we take a collection values and make sure we do something with every member of the collection is to consume the collection recursively.  That is, we're going to pass our whole collection into some sort of function which is going to do some sort of processing.  At the end of the function, it's going to call itself again, just with a smaller part of the list - the part we haven't processed.  It will do this again and again, just calling itself with smaller and smallr parts of the collection, until the whole thing is processed.  Easy peasy.  A `fold` is a specific type of recursive function that takes in a data structure, a collection of some type, and a function to use for each member.  It eventually yields just one single value - the eventual result of calling that function on the member and the result of all the previous runs through our recursive function.  The `reduce` operation is a special case of a `fold`, if you've come cross that in, say, JavaScript or Python.
 
-Types are one thing that are at least for me more confusing in english.  If looking at types helps you out, here's the type signature for `foldr`:
+Types are one thing that are, at least for me, easier to talk about in Haskell than English.  Here's the type signature for `foldr`:
 
 ```haskell
 foldr :: (a -> r -> r) -> r -> [a] -> r
 ```
 
-It's fine if you stared blankly at that, that's usually step one of unravelling a type signature.  They all work the same way, though, so we can tease it apart slowly.  We know this is a function that takes three arguments, because eveything evaluates to one value in the end - so the compiler will expect three bits of information while processing this to get to that final `r`.  The second unknown type is conventionally shown with a `b` - I'm using `r` to indicate it's our return type.  It doesn't matter what type - it could be anything.  It could even be another `a`, and often is, but it doesn't *have* to be so we use a different letter.
+It's fine if you stared blankly at that, that's usually step one of unravelling a type signature.  They all work the same way, though, so we can walkj our way through.  We know this is a function that takes three arguments, because eveything evaluates to one value in the end - so the compiler will expect three bits of information while processing this to get to that final `r`.  The second unknown type is conventionally shown with a `b` - I'm using `r` to indicate it's our return type.  It doesn't matter what type - it could be anything.  It could even be another `a`, and often is, but it doesn't *have* to be so we use a different letter.
 
 The first thing is our processing function, with signature `a -> r -> r`.  This itself is a function, which takes two arguments, by the same logic as above.  It takes in a single element of our `[a]`, that is, list of `a` types, and some value of the type that we're returning, and returns a new return type.  When you pass in one cell of our `Board`, this function will give back the next accumulated result.  The next argument is a single instance of that return type - the "destination" so to speak.  We know we're going to be getting a single value from this fold, and we have a function that takes a cell and our current running result and gives us back the new result, so we can drop that cell from the next run through the recursion.  But the firrst run through, we need somewhere to deposit the result of the computation - so `foldr` asks for a container as the second argument of type `r` to apply the result to.  This initial value we pass in is going to be transformed every run through the function and is eventually what gets returned.
 
@@ -250,15 +272,71 @@ As an aside, this example could have been rewritten: `addEmUp = foldr (+) 0` - i
 
 ### The `Show` Must Go On
 
-That digression got a little nuts, but now we're armed to dive in to this bigger, messier fold.  We know its going to do the same basic type of thing as `addEmUp`.  So the first thing to look for is those three elements we know we'll need: the processing function, the starting value to accumulate in to, and the collection to process.  As a reminder, here's the first line of our `show` definition:
+That digression got a little nuts, but now we're armed to dive in to this bigger, messier fold.  We know its going to do the same basic type of thing as `addEmUp`.  So the first thing to look for is those three elements we know we'll need: the processing function, the starting value to accumulate in to, and the collection to process.  
+
+The final part, the collection, is easy.  Remembering that `$` is function application, we know we're going to apply this fold to `withinidicesFrom 1 cs`.   We know `cs` from the argument list is our list of cells: `Board cs`.  Then we just call a helper function:
 
 ```haskell
-show (Board cs) = foldr spaceEachThird [].withIndicesFrom 1.fmap showCell $ cs
+withIndicesFrom :: Int -> [a] -> [(Int, a)]
+withIndicesFrom n = zip [n..]
 ```
 
-The final part, the collection, is easy.  Remembering that `$` is function application, we know we're going to apply this fold to `cs`, which we know from the argument list is our list of cells: `Board cs`.  Then we can just follow the types.  We have a word `spaceEachThird` in the first position, which must be our processing function, and the rest of it must just define our starting accumulator.  It's a lot more to look at than a nice neat `0` but I bet (well, I hope, again - I don't remember this code) that it's going to evaluate to a value, not a function.
+This is really just an alias to attach a more domain-specific semantic name to the general function `zip`.  Given two collections, `[a]` and `[b]`, `zip` gives you back a single collection `[(a, b)]`.  This alias just defines the first term of the zip.  You might notice the argument list doesn't match up with our type declaration - we're expecting two arguments, an `Int` and some list, but only have one below.  This is an example of the "eta-reduction" I mentioned earlier - the second argument, namely the list to zip with, appears last in the argument list and the function body, so we drop it from both.  The fully specified version would read:
 
-I think I want to explore that `spaceEachThird` shindig first - this is what's going to happen to every cell.
+```haskell
+withIndicesFrom :: Int -> [a] -> [(Int, a)]
+withIndicesFrom n cs = zip [n..] cs
+```
+
+The type isn't any different, so always look for the types if you get confused.  They'll tell you what's up.
+
+We're using the argument to define the beginning of a range `[n..]`, that is, `[n, n + 1, n + 2, n + 3, ...]`.  to zip with, which will have the effect of attaching an index to each element in the list.  That's all.
+
+#### A Brief Digression on Laziness
+
+This function brushed up on another super-cool property of Haskell that I haven't made much use of in this program, but is too neat to just blow by.
+
+You may notice that the seemingly-innocuous expression `[n..]` doesn't specify a top value.  What we've done, then, is defined an *infinite list*, starting at `n` and just going and going.
+
+In most programming languages, this is quite obviously not ok.  The process would drop everything else and build this infinite list until it blows the stack and crashes, resulting in a pretty shit game[10].  Haskell, on the other hand, employs *lazy* evaluation semantics.  When the compiler passes through, it's perfectly content to leave that `[n..]` alone until it needs to begin the expansion - and even then, it only expands *as-needed*.  In the case of `withIndicesFrom`, the argument we pass it will be finite, which if you need a refresher, is not as big as infinite.  When we hit the last value of that collection to pass into `zip`, then we're good to go - no need to keep drilling our way through `[n..]` for indices we won't use.  Haskell just leaves it wherever we are and moves on.
+
+This is a pretty incredible property that allows for all kinds of patterns not possible in strict-evaluation languages, but does have the side effect of making some perfomrance characterists difficult to reason about.  It's a good thing to keep in mind when writing Haskell.
+
+#### Back to work
+
+Moving back to the code!  As a reminder, here's the first line of our `show` definition:
+
+```haskell
+show (Board cs) = foldr spaceEachThird [].withIndicesFrom 1.fmap showCell $ withIndicesFrom 1 cs
+```
+
+So, we do have a fold, but it's the *final* part of a larger *composed* function.  The composition operater in Haskell is `.`.  This particular specimen is composed of three different parts.  Writing `a.b.c x` is like writing `a(b(c(x)))`.  It's much less noisy.
+
+Our first part, `fmap showCell`, is going to call `showCell` on each cell in our indexed list of cells `[(0, Nothing), (1, Just Human), (2, Nothing)...]`  Lets look at `showCell`:
+
+```haskell
+showCell :: (Int, Maybe Player) -> String
+showCell (n, Nothing)         = " " ++ show n ++ " "
+showCell (_, (Just Human))    = " X "
+showCell (_, (Just Computer)) = " O "
+```
+
+This function has been written to take one of our conveniently pre-indexed cells and just boil it down to a string.  We actually define the function three times - the first one with an argument pattern that matches how it's called will be executed.  Again, cool stuff!  A few other programming languages I've tried can do this sort of syntax too and it's easy to get spoiled.  In this case, there are just three possible values for any given cell, having been defined as a `Maybe Player`.  We have a separate choice for each - if nobody's played yet, we `show` the index, and if it's got a player we return the proper character.
+
+This is only part of the battle though!  This gives something like `[" 1 ", " X ", " 3 ", " O ", ...]`.  The second part of our composed function calls our new friend `withIndicesFrom` again to retain our indices (blech, reading old code is always a little grimey), so we're back up at `[(1, " 1 "), (2, " X "), (3, " 3 "), (4, " O "), ...]`.
+
+Finally, we get to the last outer function: `foldr spaceEachThird []`.  This whole part is the final outer function.  In a C-like language, we might have written this:
+
+```c
+foldr(spaceEachThird,
+      [],
+      withIndicesFrom(1,
+                      showCell(/* instead of the $ in Haskell, we wrap it in parens */
+                               withIndicesFrom(1, cs))))
+```
+
+That means that now we have our collection to fold over - it's the result of everything up to here.   Our base accumulator is just `[]`, the empty list.  The missing piece is our function to fold in:
+
 
 ```haskell
 where spaceEachThird a = (++) (bool (snd a) (snd a ++ "\n") (fst a `rem` 3 == 0))
@@ -266,13 +344,11 @@ where spaceEachThird a = (++) (bool (snd a) (snd a ++ "\n") (fst a `rem` 3 == 0)
 
 The `where` just means we're defining `spaceEachThird` locally for this function only - it isn't needed outside of this exact context.  We could have defined it inline using Haskell's anonymous function syntax (`\x -> x + 1`), but even I must have decided that was too hard to read and split it out.
 
-Anyway, `spaceEachThird` has been defined as taking a single argument, `a`.  In this case, `a` is going to be our current cell - conveniently it matches what we've been using as a stand-in type.  We know the processor acts on two input values, and the other one is our accumulator, so in our definition it's going to look like we're missing an argument.  It's going to be the accumulator.
+`spaceEachThird` has been defined as taking a single argument, `a`.  In this case, `a` is going to be our current cell - conveniently it matches what we've been using as a stand-in type.  We know the processor acts on two input values because it's type `(a -> r -> r)`, and the other one is our accumulator, so in our definition it's going to look like we're missing an argument.  It's going to be the accumulator, which is just `[]` at the beginning.
 
 The first part of the definition is `(++)` is concatenation.  There's a clue to where our other type goes - we're going to have whatever we're doing with `a`, the active cell, on one side, and it's going to get concatenated to the accumulator.  That makes sense - it's kind of like adding an `Int` to the accumulator.  The accumulator will now hold information from both operands.  What on earth are we adding, though?
 
-I've grabbed the `bool` function from `Data.Bool` and it's really just some control flow.
-
-TODO COME BACK WHEN YOU UNDERSTAND YOUR CODE - fmap showCell happens first, then we fold over the *result* of fmap showcell as our init container with spaceEachThird
+I've grabbed the `bool` function from `Data.Bool` and it's really just some control flow.  From [Hoogle](https://hackage.haskell.org/package/base-4.11.1.0/docs/Data-Bool.html): `bool :: a -> a -> Bool -> a`.  This is just a concise way to express an `if` statement with two branches, not unlike the ternary `?` in some other languages with the arguments reversed.  You give it the two potential outcomes first, the first argument being the `False` case and the second being if its `True`, followed by the predicate.  So `spaceEachThird` is just testing the final argument and using `(++)` to concatenate middle one to the accumulator if it checks out, and otherwise the first one.  `(is the index evenly divisible by 3?) ? "shove a newline on me\n" : "just keep me as is"`.  The two arguments are straightforward enough - the `True` case simply inserts a newline character `\n` to the cell's string, which is the second/`snd` value in the list item.  The predicate isn't to hard to understand either - the backticks make `rem` remainder function into an infix function, and we're using `fst` to get just the index of the cell - every third cell, this will be true, so we'll start a new line.  Now we get our flat list nicely squared away.
 
 ### Gathering Input
 
@@ -326,9 +402,9 @@ So, with the predicate out of the way, we've now determined whether or not the i
           else putStrLn "That's taken!"
 ```
 
-I included the top `then` line to show that we open a new `do` block - `then do` isn't a special syntax, it's just a `do` inside a `then` :)
+I included the top `then` line to show that we open a new `do` block - `then do` isn't a special syntax, it's just a `do` inside a `then`.
 
-First, we grab a local binding of the integer version of our input `c` - BEN SHOULD YOU JUST USE `show` HERE FOR CONTINUITY? - and store it as `n'`.  Then we have one final predicate - before we can go thrusting the play's move onto the board, the Laws of TicTacToe state that you can only make a move on a square if it's empty.  No playing on top of each other!  Here's `openCell`:
+First, we grab a local binding of the integer version of our input `c` and store it as `n'`.  Then we have one final predicate - before we can go thrusting the play's move onto the board, the Laws of TicTacToe state that you can only make a move on a square if it's empty.  No playing on top of each other!  Here's `openCell`:
 
 ```haskell
 openCell :: Board -> Int -> Bool
@@ -343,7 +419,13 @@ We initialized our board to a list of `Nothing`s, so the first time through this
 
 HOWEVER!  If `openCell` comes back `true`, we've finally done it - we've ensured the value passed to `n` from stdin is a value we can meaningfully use as the player's next move.  Hot digggity dog!
 
-THe full `then` block reads: `handleInput board n' >>= compTurn >>= runGame`.  This is three separate function calls wrapped up together with `>>=`, which is read `bind`.  `>>=` is going to allow us to pass the result of a monad (that second word in the type) as the input to a subsequent monad in the chain, while still keeping it wrapped up in the proper context, in this case `IO a` or specifically `IO Board`.  We want to do stuff to that `Board` without losing the `IO` wrapping.  I think this is clearest through example, and luckily we're working through an example right now!  The first function call is `handleInput board n'`, so let's unpack that first.
+THe full `then` block reads: 
+
+```haskell
+handleInput board n' >>= compTurn >>= runGame
+```
+
+This is three separate function calls wrapped up together with `>>=`, which is read `bind`.  `>>=` is going to allow us to pass the result of a monad (that second word in the type) as the input to a subsequent monad in the chain, while still keeping it wrapped up in the proper context, in this case `IO a` or specifically `IO Board`.  We want to do stuff to that `Board` without losing the `IO` wrapping.  I think this is clearest through example, and luckily we're working through an example right now!  The first function call is `handleInput board n'`, so let's unpack that first.
 
 ### Making a Play
 
@@ -398,41 +480,17 @@ Ok, this is a little bigger.  It's a function of two arguments returning an IO m
 
 The `let...in` syntax is a way of creating function-local bindings, not unlike `where`.  In fact, they can often be used interchangeably, and the difference is subtle: `let...in` is an expression, which can be used anywhere at all that expects an expression (kinda like `if...then...else`), whereas `where` is a syntactic construct that only come after a function body.  I'm not going to get into the subtlies, see the [Haskell Wiki](https://wiki.haskell.org/Let_vs._Where) for a more thorough discussion.
 
-Anyway, before diving into the endgame checking, we're going to set up some computed local bindings to make our life a little easier.  The first one calls a helper function:
+Anyway, before diving into the endgame checking, we're going to set up some computed local bindings to make our life a little easier:
 
 ```haskell
-bi = withIndicesFrom 0 b
-
-withIndicesFrom :: Int -> [a] -> [(Int, a)]
-withIndicesFrom n = zip [n..]
+ let
+    bi = withIndicesFrom 0 b
+    plays = map fst.filter ((Just m==) . snd) $ bi
+  in
+  -- uber cool codez
 ```
 
-This is really just a handly alias to attach a more domain-specific semantic name to a general function `zip`.  Given two collections, `[a]` and `[b]`, `zip` give you back a single collection `[(a, b)]`.
-
-This alias just defines the first term of the zip.  You might notice the argument list doesn't match up with our type declaration - we're expecting two arguments, an `Int` and some list, but only have one below.  This is an example of the "eta-reduction" I mentioned earlier - the second argument, namely the list to zip with, appears last in the argument list and the function body, so we drop it from both.  The fully specified version would read:
-
-```haskell
-bi = withIndicesFrom 0 b
-
-withIndicesFrom :: Int -> [a] -> [(Int, a)]
-withIndicesFrom n cs = zip [n..] cs
-```
-
-We're using the argument to define the beginning of a range `[n..]`.  to zip with, which will have the effect of attaching an index to each element in the list.  That's all.
-
-#### A Brief Digression on Laziness
-
-This function brushed up on another super-cool property of Haskell that I haven't made much use of in this program, but is too neat to just blow by.
-
-You may notice that the seemingly-innocuous expression `[n..]` doesn't specify a top value.  What we've done, then, is defined an *infinite list*, starting at `n` and just going and going.
-
-In most programming languages, this is quite obviously not ok.  The process would drop everything else and build this infinite list until it blows the stack and crashes, resulting in a pretty shit game[10].  Haskell, on the other hand, employs *lazy* evaluation semantics.  When the compiler passes through, it's perfectly content to leave that `[n..]` alone until it needs to begin the expansion - and even then, it only expands *as-needed*.  In the case of `withIndicesFrom`, the argument we pass it will be finite, which if you need a refresher, is not as big as infinite.  When we hit the last value of that collection to pass into `zip`, then we're good to go - no need to keep drilling our way through `[n..]` for indices we won't use.  Haskell just leaves it wherever we are and moves on.
-
-This is a pretty incredible property that allows for all kinds of patterns not possible in strict-evaluation languages, but does have the side effect of making some perfomrance characterists difficult to reason about.  It's a good thing to keep in mind when writing Haskell.
-
-### Surveying the damage
-
-So, now we've saved as `bi` a version of the `Board` we're working with zipped up with indices - instead of, e.g., `[Nothing, Just Human, Nothing...]` we have `[(0, Nothing), (1, Just Human), (2, Nothing)...]`.  We're going to use this in our next `let` binding `plays = map fst.filter ((Just m==) . snd) $ bi`.
+We've saved as `bi` a version of the `Board` we're working with zipped up with indices using our old friend `withIndicesFrom` - instead of, e.g., `[Nothing, Just Human, Nothing...]` we have `[(0, Nothing), (1, Just Human), (2, Nothing)...]`.  We're going to use this in our next `let` binding `plays = map fst.filter ((Just m==) . snd) $ bi`.
 
 This line is a little token-soupy, but we're intrepid as heck.  It's a call to `map`, and the collection we're mapping over is the newly defined `bi`, so all that junk in the middle must be our mapping function.  Let's see if we can untangle it.
 
@@ -509,14 +567,16 @@ compTurn :: Board -> IO Board
 compTurn board@(Board b) = do
   let options = filter (isNothing.snd).withIndicesFrom 1 $ b
   r <- randomRIO (0, length options - 1)
-  let b2 = playCell board (fst $ options !! r) Computer
+  let play = (fst $ options !! r)
+  let b2 = playCell board play Computer
+  putStrLn $ "Computer plays " ++ show play
   checkWin b2 Computer
   return b2
 ```
 
 Ok.  So, this function is mostly familiar by now.  We see our `IO Board` return type, we're destructuring the argument to get at the list of cells as `b`, we've got our old friend the `do` block - nothing too surprising.
 
-The first line creates local binding `options`, which is going to be the result of `filter`ing our list of cells.  Filter is like `map`, except it returns only the elemnts of the input collection for which the predicate is true.  Again, aptly named.  Let's take a look at the predicate:
+The first line creates local binding `options`, which is going to be the result of `filter`ing our list of cells.  Filter is like `fmap`, except it returns only the elemnts of the input collection for which the predicate is true.  Again, aptly named.  Let's take a look at the predicate:
 
 ```haskell
 (isNothing.snd).withIndicesFrom 1
@@ -526,7 +586,7 @@ This function is composed from parts we've seen before.  First, we're going to z
 
 In the next line, we introduce the randomness.  This ends up looking similar to how you'd do this in the language of your choice - `randomRIO` from `System.Random` takes a range and will give you a pseudo-random number in that range.  We're using the length of our `options` list, and storing the result to `r`.
 
-Now, we've got to actually make the change.  This is done with `playCell` again - the differences being that instead of user input, we're using `!!` again to index into `options` with the random number we just grabbed, and we're passing in `Computer` instead of `Human`.  Now, `b2` holds our new `Board` with the random play applied.  With that taken care of, we can see if the computer managed to win the thing with `checkWin`.  If it did, `checkWin` will handle ending the game for us, and if not, we `return` again.  No need to call `gameOver` again here, because `runGame` does so first - and our pipeline `handleInput >>= compTurn >>= runGame` is sending us right back up there.
+Now, we've got to actually make the change.  This is done with `playCell` again - the differences being that instead of user input, we're using `!!` again to index into `options` with the random number we just grabbed, and we're passing in `Computer` instead of `Human`.  Now, `b2` holds our new `Board` with the random play applied.  Afterwards we can just inform the user where the computer went[FOOTNOTE]. With all that taken care of, we can see if the computer managed to win the thing with `checkWin`.  If it did, `checkWin` will handle ending the game for us, and if not, we `return` again.  No need to call `gameOver` again here, because `runGame` does so first - and our pipeline `handleInput >>= compTurn >>= runGame` is sending us right back up there.
 
 ### The Thrilling Conclusion
 
@@ -553,6 +613,8 @@ TODO check yer numbers, foo'
 [7] This was actually one of my bigger beefs with Haskell as a beginner.  In other languages, I've gotten used to choosing descriptive (but still short) names for any bindings I create.  It seems, though, that Good Haskell Style involves lots and lots of single-letter stand-ins, which goes against every instinct I have.  I feel this inhibits readability for little gain - Haskell is terse enough as it is.  I'd be interested to hear thoughts about this for more experienced Haskellers.
 
 [8] Well, more dumb - TicTacToe isn't exactly a groundbreaking paragon of high strategy to begin with
+
+[FOOTNOTE] In the interest of full disclosure, I brushed off my skillz for this post and added the numbers instead of underscores and the printout for the computer player
 
 [9] If this is a copyrighted phrase a) I'm sorry and b) come at me, bruh
 
