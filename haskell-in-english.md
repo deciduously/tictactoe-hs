@@ -3,27 +3,21 @@
 
 ## The Intro
 
-I am not remotely qualified by any metric to write this post.  This is an exercise in re-reading old code I ostensibly wrote in a crazy language I've since forgotten and never really knew, by a guy who's still pretty new to this whole "learning programming" shindig.  Let's see what happens!
-
-A little over a year ago I got it in my head to learn me a Haskell[1], just for the (minimal) street cred, and I spent a couple weeks with the (rather excellent) [book](http://haskellbook.com/). After several weeks of exercises, I wrote a pretty mean ~100 lines[1] of TicTacToe just to prove to myself I could do *something* after all that, and promptly walked off into the soft, cozy, alluring parens of Clojure.  This was in spring 2017, which means it should be no problem to tell you how it works here now, a little over a year later, having not touched any Haskell at all since.  No problem.
+A little over a year ago I got it in my head to learn me a Haskell[^1], just for the (minimal) street cred, and I spent a couple weeks with the (rather excellent) [book](http://haskellbook.com/). After several weeks of exercises, I wrote a pretty mean ~100 lines[^2] of TicTacToe just to prove to myself I could do *something* after all that, and promptly never touched it again.  This was in spring 2017, which means it should be no problem to tell you how it works here now, a little over a year later, having not touched any Haskell at all since.  No problem.
 
 As it turns out Haskell is just not that bad.  What can be scary is how different it can be to work with than what you're used to, so you hit a lot more walls at the very beginning, and it can feel difficult knowing how to even go about implementing something simple like this.  Your instincts won't all apply anymore.  Hopefully seeing it in English too to will help you (and me, again) get going!
 
 As opposed to a traditional tutorial, this is top-down, entry-point first, let's see what's here sort of deal.  I will step through every line of code as it's called and explain what's going on.
 
-My aim here is for this to be easy to follow if you've never seen a line of Haskell in your life, but in the course of untangling this program, I'm going to get down and dirty with just enough Haskell goodness to explain why the code I have is the way it is.  I won't go very deep into anything, but I'm not going to try to gloss over tricky concepts.  This game is a very simple end goal, but it's gonna have to get a little conceptual here and there so get ready to think some, especially if you're new to either functional programming or strong type systems.
-
-If any Haskellers do read this and notice something outrageously dumb that simply cannot stand, please let me know so I can correct it!  I'm going for pared down and simplified for the domain, not dead wrong.
-
-I will say that if you've never programmed before, this might be hard to read and boring, not necessarily in that order.  How'd you even end up here?  Not that it's a bad thing, by all means, learn you some programmin', it's the best, but this random blogpost is probably not where you should start.  I assume familiarity with programming concepts in a general sense like loops and control flow.
-
-I do not remember how this thing works (or much of how Haskell works), so I'm going to write this as I read it and see if we get there in the end.  ¡Vámonos!
+I do not remember how this thing works (or much of how Haskell works), so I'm going to write this as I read it and see if we get there in the end.  So, to recap, this is an exercise in re-reading old code I ostensibly wrote in a crazy language I've since forgotten and never really knew.  Let's see what happens!  ¡Vámonos!
 
 ## The Program
 
 This is a dirt simple TicTacToe game played on the command line against a randomly playing computer opponent.  Fun, right?  Hours, nay, DAYS of entertainment await.  A project like this is usually my go-to "hello world" in a new language, because at the end it demonstrates you can leverage the language's various facilities at least a little, like control flow and IO and overall structure.  For Haskell, it was more a "TTFN, world", but the point stands.  The full source can be found [here](https://github.com/deciduously/tictactoe-hs/blob/master/src/Main.hs), the entirety of which will appear in snippet-form below.
 
-Here's a sample game:
+If you have `stack` installed, you can open a terminal in the project directory and run `stack exec ttt` to play a compiled executable or `stack ghci` to open a repl from which you can interact directly with the functions defined (including `main`).
+
+Here's a sample game, as executed from the repl:
 
 ```
 *Main> main
@@ -80,27 +74,28 @@ Haskell programs are organized into modules.  Opening up `Main.hs`, we see line 
 I see some type declarations right under the import statements, but I don't really understand what needs modelling yet, so instead I'm going to skim down and see which actual function is called first when you execute this.  This is significant in any language, but in Haskell your whole program *is* this value.  Or your module export, at least.  Your task is to define the result of computing this value.  In `Main.hs`, this value is also called `main` and lives at the bottom of the file:
 
 ```haskell
+-- line 93
 main :: IO ()
 main = do
   let board = freshBoard
   runGame board
 ```
 
-In Haskell, every value (functions count, they evaluate to values) is tagged with its type annotation.  Haskell goes hard on the types, in a way that you've likely never come across if things like Java and C++ are as heavy a type system as you've ever worked with.  The compiler is actually magic[3] and does not require these - it's considered good style for top-level functions in a module but they can be omitted for internal values.  However, they are a huge help if you start getting bogged down in compiler errors!  A type annotation has the name first, followed by the double colon `::`, followed by the type, and you'll see them all over Haskell code.
+In Haskell, every value (functions count, they evaluate to values) hs a type.  Haskell goes hard on the types, in a way that you've likely never come across if things like Java and C++ are as heavy a type system as you've ever worked with.  The compiler is actually magic[^3] and does not require annotations - it's considered good style for top-level functions in a module but they can be omitted for internal values.  However, they are a huge help if you start getting bogged down in compiler errors!  A type annotation has the name first, followed by the double colon `::`, followed by the type, and you'll see them all over Haskell code.
 
 Our `main` value has the type `IO ()`.  Right off the bat, we get a taste of some of funky fresh Haskell weirdness, and I'm actually going to have to digress for a moment to set the scene.  Stay with me, I promise it's just a little bit.
 
 #### Setting the scene: A Digression on `IO ()`
 
-I'm going to preface this by saying I am *not* making this a blog post about Monads.  I do, though, need to talk about them at least a little (we can gloss through most of the details but theres a `(>>=)` or two just sitting there), and they're really not a scary thing at all.  This is the super simple shakedown, and it's only a shakedown becase I thought it sounded good after "super simple".  If you have no clue what I'm talking about, on either point, don't worry about it.
+I'm going to preface this by saying I am *not* making this a blog post about Monads, if you've heard the good advice about genereally running away from those.  I do, though, need to talk about them at least a little (we can gloss through most of the details but theres a `(>>=)` or two just sitting there), and they're really not a scary thing at all.  This is the super simple shakedown, and it's only a shakedown becase I thought it sounded good after "super simple".
 
 IO is a monad.  This means it's a type that can have other things that are also monads inside of it.  In fact, it sometimes *is* those other things!  Our whole program, `ttt`, is an `IO ()`, which is a `Monad`.
 
-In Haskell, every function is a *pure* function.    If you're not familiar with the terminology, "pure" means that the function does not rely upon or act on values outside of its own body.  Put another way, the function will always return the same output for a given input because there is nothing else the output depends on, and you're guaranteed that nothing outside of itself will change in the course of running it.  The savvy among you might already be asking "but wait!   There are all kinds of things a function might want to do outside of itself.  How about printing a letter to the screen?"  To which Haskell says "Oh, shoot.  We hadn't thought of that.  Pack it up!"  Good post everyone.
+Haskell is a *functional* programming language, which is really a rather broad category of languages that emphasis a style of programming in which the function is the basic unit of computation.  In Haskell, this is furhter constrained by demanding that every function be a *pure* function.  If you're not familiar with the terminology, "pure" means that the function does not rely upon or act on values outside of its own body.  Put another way, the function will always return the same output for a given input because there is nothing else the output depends on, and you're guaranteed that nothing outside of itself will change in the course of running it.  The savvy among you might already be asking "but wait!   There are all kinds of things a function might want to do outside of itself.  How about printing a letter to the screen or responding to any external input?"  To which Haskell says "Oh, shoot.  We hadn't thought of that.  Pack it up!"  Good post everyone.
 
-...Hah!  Got you, didn't I.  The Haskell solution for this little technicality of actually having to be useful has to do with the types that I raved about.  I read this as "IO Unit".  The first part means it's of type IO, so it does something with IO (Input/Output).  But this is Haskell, and we need to know what *type* this monad returns so that we can use it within our typed functional program (spoiler alert: specifically other monads).  Our compiler is just doing it's happy ol' thing evaluating values as it sees them, we've got to keep the computation rollin'! .  "Doing IO" isn't a type, so Haskell has something called the `IO` Monad.  For this program right now what you need to know is that an `IO` monad like `main` will do something with IO but also evaluates to something.  The `Monad` is a way of encapsulating that idea -  whatever it does will happen inside of it and then you get this second type back. A monad can be thought of as an "action" or "computation".  It isn't the action itself, it's just the concept of carrying out that action.  It's a noun through and through, just a "thing" we can pass around in our program  (NOT a function, though functions can return Monads), but it's a little weird so don't worry if that's not sitting well with you yet.  Monads turn out to be a great way to compose functionality especially where stuff gets messy, like responding to input from the user in a language that only allows pure functions.
+...Hah!  Got you, didn't I.  The Haskell solution for this little technicality of actually having to be useful has to do with the types that I raved about.  I read this as "IO Unit".  The first part means it's of type IO, so it does something with IO (Input/Output).  But this is Haskell, and we need to know what *type* this monad returns so that we can use it within our typed functional program (spoiler alert: specifically within other monads).  Our compiler is just doing it's happy ol' thing evaluating values by executing functions as it sees them, we've got to keep the big computation rollin'! .  "Doing IO" isn't a type, so Haskell has something called the `IO` Monad.  For this program right now what you need to know is that an `IO` monad like `main` will do something with IO in its body but also evaluates to something inthe context of your purely functional program.  The `Monad` is a way of encapsulating that idea -  whatever it does will happen inside of it and then you get this second type back. A monad can be thought of as an "action" or "computation".  It isn't the action itself, it's just the concept of carrying out that action.  It's a noun through and through, just a "thing" we can pass around in our program  (NOT a function, though functions can return Monads), but it's a little weird so don't worry if that's not sitting well with you yet.  Monads turn out to be a great way to compose functionality without sacrificing that sweet, saucy purity.
 
-Don't worry too much if I lost you here, really.  For our use in this program, the IO Monad is the (slightly confusing) type of "doing IO" and it can carry a type with it.  That type it carries is the second term.  For `main`, we don't have anything, so we return `()`, the empty tuple.  Putting them together, we have our type `IO ()`.  This is akin to `void` in C, or, well, `unit | ()` in a bunch of diferent languages.  Zilch.
+Don't worry too much if I lost you here, really.  For our use in this program, the IO Monad is the (slightly confusing) type of "doing input and/or output" and it will yield a thing when its done.  That type it carries is the second term.  For `main`, we don't have anything, so we return something of type `()`, the empty tuple (there is only one thing, `()` - the empty tuple).  Putting them together, we have our type `IO ()`.  This is akin to `void` in C, or, well, `unit | ()` in a bunch of diferent languages.  Zilch.
 
 For a superior but still blitz-pace Monad (etc.) run-through with pictures, [this blogpost](http://adit.io/posts/2013-04-17-functors,_applicatives,_and_monads_in_pictures.html) will get you up to speed surprisingly quickly, from the author of ["Grokking algorithms"](http://a.co/ba5icnv).
 
@@ -112,7 +107,7 @@ Anyway, let's look back up at `main :: IO ()`.  From the type, we know it will p
 
 The definition is directly below.  You'll note I haven't called it a function - it isn't one.  It's just an `IO ()`.  A noun, not a verb - a thing that performs some IO to evaluate.  My favorite kind of TicTacToe, luckily!  We can tell because the type doesn't have an arrow `->` in it.  All functions are mappings from a type to another type (or more), like `Int -> Int` or `Int -> ()`.  Main just does our IO and has `()` to show for it.
 
-The name to the left of the defintion, the `=`, and the body to the right.  Haskell is like Python in that its scopes are whitespace delimited.  Anything indented is indside the parent scope.  Main is going to `do` a few things.
+The name to the left of the defintion, the `=`, and the body to the right.  Haskell is like Python in that its scopes are whitespace delimited.  Anything indented is inside the parent scope.  Our `main` is going to `do` a few things.
 
 #### Gettin Your Sequence On: A Second Digression on `do`
 
@@ -120,11 +115,12 @@ The name to the left of the defintion, the `=`, and the body to the right.  Hask
   
 If I lost you there, that's ok.  The takeaway is that if you're in a monad like `main :: IO ()`, you can use generally `do` to do some things sequentially and that's A-OK with Haskell.  This is what allows monads to, for instance, respond to input.  Inside the do block, both things I call out to are also `IO` monads.  The total value of `main`, i.e. the result of running the executable, relies on some external input to compute, and it's going to need to respond based on whatever input it receives.
 
-Whew.  Another token, another paragraph of exposition.  So, what is it we're `do`ing?  The first statement is something I finally don't have a whole paragraph about.  With the line `let board = freshBoard` we're creating a binding of the name `board` and assigning it the value `freshBoard`.  What's `freshBoard`, you ask?  Why, lines 27 and 28 of `Main.hs` of course!
+Whew.  Another token, another couple paragraphs of exposition.  So, what is it we're `do`ing?  The first statement is something I finally don't have a whole paragraph about.  With the line `let board = freshBoard` we're creating a binding of the name `board` and assigning it the value `freshBoard`.  What's `freshBoard`, you ask?  Why, lines 27 and 28 of `Main.hs` of course!
 
 ### Leaving `main`
 
 ```haskell
+-- line 27
 freshBoard :: Board
 freshBoard = Board $ replicate 9 Nothing
 ```
@@ -132,15 +128,18 @@ freshBoard = Board $ replicate 9 Nothing
 So, `freshBoard` is a `Board`.  I don't even want to know what a fresh one of these bad boys is without know what a `Board` looks like in general, so now lets go back up to the top and see what types I've defined.
 
 ```haskell
+-- line 12
 newtype Board = Board [Maybe Player]
 data Player = Human | Computer deriving (Eq, Show)
 ```
 
-And there you have it.  The brackets around `Maybe Player` mean that it's a list of `Maybe Player.`.  Obvious, right?  I'm joking, I'll talk about it.  A `Maybe` is a useful type allowing you to encode the concept of nullablillity into the type system, instead of as a `null` value that can get thrown around.  Similar concepts appear in other languages like Rust and Swift (and OCaml and Scala and F# and SML and Elm and etc, etc - it's not a new or Haskell-specific concept is the point here).  A `Maybe` can either be `Nothing` or a `Just <something>`, in our case a `Player` from the type.  `Maybe Player` is actually also a type - `Maybe` is a *higher-kinded type* meaning it can be (nay, WILL be!  MUST be!) parameterized with a type.  The word `kind` here refers to *how many layers* of parametrization this type requires.  Without a type parameter, `Maybe` is not a complete, usable type at all - every `Maybe` will carry a specific type.  `Maybe` has *kind* `* -> *`, meaning a mapping from something to something, and when `Player` is that `*` something type, it becomes the fully resolved type `Maybe Player`, with *kind* `*` that can be fully evaluated in other functions in our quest for the One True Value.  Remember earlier when I called the compiler magic?  It goes further... `Either`, which is *kind* `* -> * -> *`takes two type-level arguments, can (and does) create curried types by only supplying one parameter!  For example `Either Player` is a partially resolved type that still has kind `* -> *`.  These are *type-level functions*.  It's cool stuff, but not important for this program.
+And there you have it.  The brackets around `Maybe Player` mean that it's a list of `Maybe Player.`.  Obvious, right?  I'm joking, I'll talk about it.
 
-Alright, armed with at least some of that knowledge, we can take a look at `Board $ replicate 9 nothing`.  This is nice and neat in that even though it looks a little incantation-y, it's got a nice English ring to it.  It's almost like reading a sentence, or at least pseudocode.  You'll want to know, going forward, about `$` - this is just function application with different precedence/associatvity rules.  Its `Board(replicate 9 nothing)`.  It seems redundant at first, but the low precedence and right-associativity let you omit parens: `f $ g $ h x  =  f (g (h x))`[5].  It looks funky but if I recall it felt natural pretty quickly.  Buckle up, because there's a little more token soup below.  Haskell is not shy about esoteric operators.
+A `Maybe` is a useful type allowing you to encode the concept of nullablillity into the type system, instead of as a `null` value that can get thrown around.  Similar concepts appear in other languages like Rust and Swift (and OCaml and Scala and F# and SML and Elm and etc, etc - it's not a new or Haskell-specific concept is the point here).  A `Maybe` can either be `Nothing` or a `Just <something>`, in our case a `Player` from the type.  `Maybe Player` is actually also a type - `Maybe` is a *higher-kinded type* meaning it can be (nay, WILL be!  MUST be!) parameterized with a type.  The word `kind` here refers to *how many layers* of parametrization this type requires.  Without a type parameter, `Maybe` is not a complete, usable type at all - every `Maybe` will carry a specific type.  `Maybe` has *kind* `* -> *`, meaning a mapping from something to something, and when `Player` is that `*` something type, it becomes the fully resolved type `Maybe Player`, with *kind* `*` that can be fully evaluated in other functions in our quest for the One True Value.  Remember earlier when I called the compiler magic?  It goes further... `Either`, which is *kind* `* -> * -> *`takes two type-level arguments, can (and does) create curried types by only supplying one parameter!  For example `Either Player` is a partially resolved type that still has kind `* -> *`.  These are *type-level functions*.  It's cool stuff, but not important for this program.
 
-`replicate 9 nothing` isn't too hard to tease apart.  Function application is just spaces in Haskell (it's a function-oriented language, after all), so we're calling `replicate` with the arguments `9` and `Nothing`.  And `Board` wanted a list of `Maybe Player`s.  `replicate` makes uses the first argument to decide how many "replicas" of the 2nd to make, and returns them as a list.  Which is what we said a `Board` held. Ok, cool, so a `freshBoard` is a `Board` has nine cells that *can* hold a `Player`, but don't currently.  That's the whole data structure for the app.  We get a lot of guarantees for free at compile time already from the definition- definitely more than your average vector or array.
+Alright, armed with at least some of that knowledge, we can take a look at `Board $ replicate 9 nothing`.  This is nice and neat in that even though it looks a little incantation-y, it's got a nice English ring to it.  It's almost like reading a sentence, or at least pseudocode.  You'll want to know, going forward, about `$` - this is just function application with different precedence/associatvity rules.  Its `Board(replicate 9 nothing)`.  It seems redundant at first, but the low precedence and right-associativity let you omit parens: `f $ g $ h x  =  f (g (h x))`[^4].  It looks funky but if I recall it felt natural pretty quickly.  Buckle up, because there's a little more token soup below.  Haskell is not shy about esoteric operators.
+
+`replicate 9 nothing` isn't too hard to tease apart.  Function application is just via spaces in Haskell (it's a function-oriented language, after all), so we're calling `replicate` with the arguments `9` and `Nothing` instead of `replicate(9, Nothing)`.  And `Board` wanted a list of `Maybe Player`s.  `replicate` makes uses the first argument to decide how many "replicas" of the 2nd to make, and returns them as a list.  Which is what we said a `Board` held. Ok, cool, so a `freshBoard` is a `Board` has nine cells that *can* hold a `Player`, but don't currently.  That's the whole data structure for the app.  We get a lot of guarantees for free at compile time already from the definition- definitely more than your average vector or array.
 
 While we're up here, it makes sense to get familiar with `Player`, since we're going to be up here a lot.  This is a union type, like an enum.  If you've never worked with those, it's just a bit of data that can either be a `Human` or a `Computer` and nothing else, and we've auto-derived some typeclasses for it that let us compare `Players` for equality, i.e. tell if `Human == Human`, etc, and to display them to the console as-is.  These are the only possible values for each cell in the board.
 
@@ -151,6 +150,7 @@ Great!  So to recap, we've now stored a `Board` of 9 cells that might contain a 
 Now we're truckin' along!  Our `freshBoard` is ready for some killer moves.  The next line is a simple function call reads `runGame board` - easy enough.  We're going to pass our new board into the `runGame` function.  What does that look like?
 
 ```haskell
+-- line 75
 runGame :: Board -> IO ()
 runGame board = forever $ do
   gameOver board
@@ -177,6 +177,7 @@ Diving in to the defintion, we see we're going to define another `do` block, but
 What's inside this function, then?  The next line immediately calls out to another function called `gameOver` and passes it the board, which right now is fresh.  Let's look at `gameOver`.
 
 ```haskell
+-- line 68
 gameOver :: Board -> IO ()
 gameOver board@(Board b) =
   when ( all isJust b) $ do
@@ -185,7 +186,11 @@ gameOver board@(Board b) =
     exitSuccess
 ```
 
-Well, that type signature should be getting repetitive.  This is another one that takes a `Board`, does some sort of IO, and doesn't pass anything back to the caller.  The token soup in the second line is just destructuruing syntax - remembering that our `Board` is the only argument, all `board@(Board b)` does is allows us to refer to both the whole structure as `board` as well as specifically the inside list of cells as `b`.  The body of this function is straightforward to read.  `when ( all isJust b)` we're going to `do` something.  `when` is another thing we imported from `Control.Monad`, but it's also not scary and does what you'd expect - checks the predicate and enters the block if true.  Remember that each one off the nine cells is a type of `Maybe Player`, and a `Maybe a` can be either `Just a` or `Nothing`, using `a` as a stand-in for any type.  `isJust` is a helper predicate from `Data.Maybe` (imported, like a fine wine) that returns true if what was passed in is the `Just` variety of `Maybe`.  We passed it along with our list of cells `b` into `all`, which is like a big ol' `AND`/`&&` - it returns the false the first time it hits a false, or the whole expression is true.  So when every cell has a player in it, `gameOver` will notice that it's time to pack it up and end the game.  Specifically, it will show you the board with `print` (details below) and tell you the game was a draw with `putStrLn`.  These only work in an IO Monad, and finally justify all that hullaballoo about monads before we could dive in!  Remembering that `do` is secretly chaining together its children with a `then`, this ends up looking a lot like your garden variety imperative, impure stuff, but never breaks any rules to do so.  It's all one big IO monad built from the inner results of calling each of these functions, which themselves return IO monads making it all work.  That's why `main` has to be an IO monad as well even though it doesn't perform any IO explicitly - it's built from functions that do.  When the printing is over, we just `exitSuccess`, terminating the program with status code 0.
+Well, that type signature should be getting repetitive.  This is another one that takes a `Board`, does some sort of IO, and doesn't pass anything back to the caller.  The token soup in the second line is just destructuruing syntax - remembering that our `Board` is the only argument, all `board@(Board b)` does is allows us to refer to both the whole structure as `board` as well as specifically the inside list of cells as `b`.
+
+The body of this function is straightforward to read.  `when ( all isJust b)` we're going to `do` something.  `when` is another thing we imported from `Control.Monad`, but it's also not scary and does what you'd expect - checks the predicate and enters the block if true.  Remember that each one off the nine cells is a type of `Maybe Player`, and a `Maybe a` can be either `Just a` or `Nothing`, using `a` as a stand-in for any type.  `isJust` is a helper predicate from `Data.Maybe` (imported, like a fine wine) that returns true if what was passed in is the `Just` variety of `Maybe`.  We passed it along with our list of cells `b` into `all`, which is like a big ol' `AND`/`&&` - it returns the false the first time it hits a false, or the whole expression is true.
+
+So when every cell has a player in it, `gameOver` will notice that it's time to pack it up and end the game.  Specifically, it will show you the board with `print` (details below) and tell you the game was a draw with `putStrLn`.  These only work in an IO Monad,, both being type `String -> IO ()` and finally justify all that hullaballoo about monads before we could dive in!  That's some good ol' fashioned output.  Remembering that `do` is secretly chaining together its children with a `then`, this ends up looking a lot like your garden variety imperative, impure stuff, but never breaks any Haskell rules to do so.  It's all one big IO monad built from the inner results of calling each of these functions, which themselves return IO monads making it all work.  That's why `main` has to be an IO monad as well even though it doesn't perform any IO explicitly - it's built from functions that call functions (that call functions) that do.  When the printing is over, we just `exitSuccess`, terminating the program with status code 0.
 
 So `gameOver` just makes sure there's still a game to play on the board before diving in and trying to run a turn.  If we're done, the whole process ends, and if not this function doesn't do or return anything at all so `runGame` can progress.  We've just begun our journey, so when we passed in the `Board`, `all` of it was most definitely not `isJust`.  Moving on, what does a run of the game loop look like?
 
@@ -193,13 +198,14 @@ First, it looks like we `print` it out.  Groovy.  But wait!  Slow down.  How doe
 
 #### A digression - Typeclasses: types, with class
 
-I know I said I wouldn't go too much into it, but this is fun and quick.  It's got all kinds of typeclass goodness to unwrap.  We already know `Maybe` is a higher-kinded type, specifically of *kind* `* -> *`, which means its one of those fancy type-level functions - those asterisks stand in for any type.  This syntax is used to describe the *kind*s of types.  What we didn't talk about with `Maybe` is that it's a member of several useful typeclasses.  We've already talked about some: `Monad`, you may (or may not, I don't know) hae guessed, `Eq`, `Show`.  These apply to specific types like `Int` or `Maybe` and define what happens to them in certain situations.  For now, you can think of them as not unlike interfaces in an object-oriented settings, but they're really so much more than just interfaces.  The compiler knows how to derive simple ones for us for simple types - for instance, when you want to print a `7` to the screen, you pretty much always want to write that numeral to stdout.  If you ask if that `7` is `==` another `7`, it's reasonable to assume the compiler can tell you it, in fact, is.
+I know I said I wouldn't go too much into it, but this is fun and quick.  I'll use `Maybe` - it's got all kinds of typeclass goodness to unwrap.  We already know `Maybe` is a higher-kinded type, specifically of *kind* `* -> *`, which means its one of those fancy type-level functions - those asterisks stand in for any type.  This syntax is used to describe the *kind*s of types.  What we didn't talk about with `Maybe` is that it's a member of several useful typeclasses like `Eq` and`Show`.  These apply to specific types like `Int` or `Maybe` and define what happens to them in certain situations, and as we saw above, can be derived automatically in some cases.  For now, you can think of them as not unlike interfaces in an object-oriented settings, but they're really so much more than just interfaces.  The compiler knows how to derive simple ones for us for simple types - for instance, when you want to print a `7` to the screen, you pretty much always want to write that numeral to stdout.  If you ask if that `7` is `==` another `7`, it's reasonable to assume the compiler can tell you it, in fact, is.
 
 ### `Show` Me The Money
 
-For union types like `Player`, we can tell the compiler to assume we just want to print out the name of the variant like `Human` or `Computer`.  But if we wanted to do something crazy, we could easily just define our own instance of `Show` that has code to manipulate it.  With a more complicated type, like `Board`, we want to have that control.  Here's our definition of `Show` for `Board`, which `print :: IO ()`[6] is currently asking for in order to evaluate:
+For union types like `Player`, we can tell the compiler to assume we just want to print out the name of the variant like `Human` or `Computer`.  But if we wanted to do something crazy, we could easily just define our own instance of `Show` that has code to manipulate it.  With a more complicated type, like `Board`, we want to have that control.  Here's our definition of `Show` for `Board`, which `print :: IO ()` is currently asking for in order to evaluate.  It's defined up with tout other definitions:
 
 ```haskell
+-- line 15
 instance Show Board where
   show (Board cs) = foldr spaceEachThird [].withIndicesFrom 1.fmap showCell $ withIndicesFrom 1 cs
     where spaceEachThird a = (++) (bool (snd a) (snd a ++ "\n") (fst a `rem` 3 == 0))
@@ -229,7 +235,7 @@ Types are one thing that are, at least for me, easier to talk about in Haskell t
 foldr :: (a -> r -> r) -> r -> [a] -> r
 ```
 
-It's fine if you stared blankly at that, that's usually step one of unravelling a type signature.  They all work the same way, though, so we can walkj our way through.  We know this is a function that takes three arguments, because eveything evaluates to one value in the end - so the compiler will expect three bits of information while processing this to get to that final `r`.  The second unknown type is conventionally shown with a `b` - I'm using `r` to indicate it's our return type.  It doesn't matter what type - it could be anything.  It could even be another `a`, and often is, but it doesn't *have* to be so we use a different letter.
+It's fine if you stared blankly at that, that's usually step one of unravelling a type signature.  They all work the same way, though, so we can walk our way through.  We know this is a function that takes three arguments, because eveything evaluates to one value in the end - so the compiler will expect three bits of information while processing this to get to that final `r`.  The second unknown type is conventionally shown with a `b` - I'm using `r` to indicate it's our return type.  It doesn't matter what type - it could be anything.  It could even be another `a`, and often is, but it doesn't *have* to be so we use a different letter.
 
 The first thing is our processing function, with signature `a -> r -> r`.  This itself is a function, which takes two arguments, by the same logic as above.  It takes in a single element of our `[a]`, that is, list of `a` types, and some value of the type that we're returning, and returns a new return type.  When you pass in one cell of our `Board`, this function will give back the next accumulated result.  The next argument is a single instance of that return type - the "destination" so to speak.  We know we're going to be getting a single value from this fold, and we have a function that takes a cell and our current running result and gives us back the new result, so we can drop that cell from the next run through the recursion.  But the firrst run through, we need somewhere to deposit the result of the computation - so `foldr` asks for a container as the second argument of type `r` to apply the result to.  This initial value we pass in is going to be transformed every run through the function and is eventually what gets returned.
 
@@ -277,6 +283,7 @@ That digression got a little nuts, but now we're armed to dive in to this bigger
 The final part, the collection, is easy.  Remembering that `$` is function application, we know we're going to apply this fold to `withinidicesFrom 1 cs`.   We know `cs` from the argument list is our list of cells: `Board cs`.  Then we just call a helper function:
 
 ```haskell
+-- line 19
 withIndicesFrom :: Int -> [a] -> [(Int, a)]
 withIndicesFrom n = zip [n..]
 ```
@@ -298,7 +305,7 @@ This function brushed up on another super-cool property of Haskell that I haven'
 
 You may notice that the seemingly-innocuous expression `[n..]` doesn't specify a top value.  What we've done, then, is defined an *infinite list*, starting at `n` and just going and going.
 
-In most programming languages, this is quite obviously not ok.  The process would drop everything else and build this infinite list until it blows the stack and crashes, resulting in a pretty shit game[10].  Haskell, on the other hand, employs *lazy* evaluation semantics.  When the compiler passes through, it's perfectly content to leave that `[n..]` alone until it needs to begin the expansion - and even then, it only expands *as-needed*.  In the case of `withIndicesFrom`, the argument we pass it will be finite, which if you need a refresher, is not as big as infinite.  When we hit the last value of that collection to pass into `zip`, then we're good to go - no need to keep drilling our way through `[n..]` for indices we won't use.  Haskell just leaves it wherever we are and moves on.
+In most programming languages, this is quite obviously not ok.  The process would drop everything else and build this infinite list until it blows the stack and crashes, resulting in a pretty shit game.  Well, more shit.  Haskell, on the other hand, employs *lazy* evaluation semantics.  When the compiler passes through, it's perfectly content to leave that `[n..]` alone until it needs to begin the expansion - and even then, it only expands *as-needed*.  In the case of `withIndicesFrom`, the argument we pass it will be finite, which if you need a refresher, is not as big as infinite.  When we hit the last value of that collection to pass into `zip`, then we're good to go - no need to keep drilling our way through `[n..]` for indices we won't use.  Haskell just leaves it wherever we are and moves on.
 
 This is a pretty incredible property that allows for all kinds of patterns not possible in strict-evaluation languages, but does have the side effect of making some perfomrance characterists difficult to reason about.  It's a good thing to keep in mind when writing Haskell.
 
@@ -307,6 +314,7 @@ This is a pretty incredible property that allows for all kinds of patterns not p
 Moving back to the code!  As a reminder, here's the first line of our `show` definition:
 
 ```haskell
+-- line 16
 show (Board cs) = foldr spaceEachThird [].withIndicesFrom 1.fmap showCell $ withIndicesFrom 1 cs
 ```
 
@@ -315,6 +323,7 @@ So, we do have a fold, but it's the *final* part of a larger *composed* function
 Our first part, `fmap showCell`, is going to call `showCell` on each cell in our indexed list of cells `[(0, Nothing), (1, Just Human), (2, Nothing)...]`  Lets look at `showCell`:
 
 ```haskell
+-- line 22
 showCell :: (Int, Maybe Player) -> String
 showCell (n, Nothing)         = " " ++ show n ++ " "
 showCell (_, (Just Human))    = " X "
@@ -339,6 +348,7 @@ That means that now we have our collection to fold over - it's the result of eve
 
 
 ```haskell
+-- line 17
 where spaceEachThird a = (++) (bool (snd a) (snd a ++ "\n") (fst a `rem` 3 == 0))
 ```
 
@@ -355,6 +365,7 @@ I've grabbed the `bool` function from `Data.Bool` and it's really just some cont
 Whew!  That `print board` line turned out to be a little intense.  Luckily, the beauty of programming is that we've only gotta tell it how once, right?  The next order of business is going to be asking the player where they'd like to play.  The next two lines are familiar enough:
 
 ```haskell
+-- line 79
 putStr "Your move: "
 hFlush stdout
 ```
@@ -367,6 +378,7 @@ Now we get to the big `case` statement of `runGame`.  This is where we appropria
 
 We'll start with the outer layer:
 ```haskell
+-- line 82
 case n of
     [c] ->
       -- do some really awesome stuff with our single char
@@ -374,11 +386,12 @@ case n of
     _   -> putStrLn "Only one digit allowed!"
 ```
 
-This syntax just checks if our input `n` consists of a single character.  TODO EXPLAIN THIS A LITTLE BETTER.  If it does, we'll keep it and do stuff, and if not we'll lightly admonish the idiot at the keyboard with a `putStrLn` call - this is a `putStr` that includes a trailing newline.  I mean, honestly, don't you know how to play TicTacToe?   This is the last line of our function - but it's all wrapped up in a `forever`, so if that does happen we'll just take it again from the top of `runGame` until the user gives us something we can work with.  Should I have optimized away the extra `gameOver` check in this case?  Most definitely.  Will I?  Highly unlikely.
+This syntax just checks if our input `n` consists of a single character.  TODO EXPLAIN THIS A LITTLE BETTER.  If it does, we'll keep it and do stuff, and if not we'll lightly admonish the idiot at the keyboard with a `putStrLn` call - this is a `putStr` that includes a trailing newline.  I mean, honestly, don't you know how to play TicTacToe?   This is the last line of our function - but it's all wrapped up in a `forever`, so if that does happen we'll just take it again from the top of `runGame` until the user gives us something we can work with.[^5]
 
 If, however, the user complied and only passed in a single character, we still have a little work to do:
 
 ```haskell
+-- line 84
 if [c] `elem` map show [(1::Integer)..9]
 then do
   -- We've got us a digit!  Do some awesome stuff with it
@@ -386,15 +399,16 @@ then do
 else putStrLn "1-9 only please"
 ```
 
-`if` in Haskell works more or less how you might expect, with the caveat that it's an *expression*, not a *statement* - that is, the entire `if` block must reduce to a value  (remember, `IO ()` counts - it's just a value of type "doing some IO" with nothing being passed back into the function).  You cannot have an `if` without an `else`.  Aside from that, though, it's as expected - you pass in a predicate and if that predicate evaluates to `true`, we'll execute the `then` block, and if not, we'll use `else`.  If you have more than two cases, I recommend `case` over `if`.
+`if` in Haskell works more or less how you might expect, with the caveat that it's an *expression*, not a *statement* - that is, the entire `if` block must reduce to a value. Remember, `IO ()` counts - it's just a value of type "doing some IO" with nothing being passed back into the function.  You cannot have an `if` without an `else`.  Aside from that, though, it's as expected - you pass in a predicate and if that predicate evaluates to `true`, we'll execute the `then` block, and if not, we'll use `else`.  If you have more than two cases, I recommend `case` over `if`.
 
 The first thing to check is whether or not the single character we now know we have is a valid play or not - it must be a digit from 1 to 9, not a letter or a bit of punctuation or anything.  The first line defines this predicate using the `elem` function, which checks if the first operand of type `a` (anything) is an element of the second.  Most functions in haskell are *prefix* in that the function names come first followed by the arguments.  To use a function of two arguments more like an *infix* operator between two operands, you can wrap it in backticks.
 
-This predicate is asking if our char input is a digit from 1 to 9, and employs a handy little trick to do so.  We can't simply ask if `"1" == 1` (lookin' at you, JavaScript) because one is a character and the other is an integer.  So first we need to get a list of valid chars `["1", "2", "3", "4", "5", "6", "7", "8", "9"]` to compare against.  A quick way to build this array is our good friend `show` - if you recall, this is how we convert a type into something we can print out on the screen.  In the case of an Integer, this means turning it into a char representation first to send to stdout.  We can `map` the `show` function over a list `[1..9]` and it will perform that conversion for us for every element.  We're using the range operator `..` to construct our list, and by tagging the first element with a concrete type `1::Integer` we ensure each element we're mapping `show` over is an integer to begin with.  Pretty handy!
+This predicate is asking if our char input is a digit from 1 to 9, and employs a handy little trick to do so.  We can't simply ask if `"1" == 1` because one is a `String` and the other is an `Int`.  So first we need to get a list of valid chars `["1", "2", "3", "4", "5", "6", "7", "8", "9"]` to compare against.  A quick way to build this array is our good friend `show` - if you recall, this is how we convert a type into something we can print out on the screen.  In the case of an Integer, this means turning it into a string representation first to send to stdout.  We can `map` the `show` function over a list `[1..9]` and it will perform that conversion for us for every element.  We're using the range operator `..` to construct our list, and by tagging the first element with a concrete type `1::Integer` we ensure each element we're mapping `show` over is an integer to begin with.  Pretty handy!
 
 So, with the predicate out of the way, we've now determined whether or not the input stored in `n` is a single digit.  Our else statement looks like the previous - print out a quick error telling the user how exactly they were dumb, and that's it - head back on up to the top of `runGame` and hope this chucklehead learned their lesson.  If it was a digit, however, we can move on to one final nested `if`:
 
 ```haskell
+-- line 85
  then do
           let n' = digitToInt c
           if openCell board n'
@@ -407,11 +421,12 @@ I included the top `then` line to show that we open a new `do` block - `then do`
 First, we grab a local binding of the integer version of our input `c` and store it as `n'`.  Then we have one final predicate - before we can go thrusting the play's move onto the board, the Laws of TicTacToe state that you can only make a move on a square if it's empty.  No playing on top of each other!  Here's `openCell`:
 
 ```haskell
+-- line 30
 openCell :: Board -> Int -> Bool
 openCell (Board b) n = isNothing $ b !! (n - 1)
 ```
 
-This is a function that takes two arguments, a `Board` and an integer, and returns a boolean like a predicate should.  We're going to pass in the full board and a specific square, and `openCell` will tell us if the space is already occupied.  In some languages it's good style to name predicates like this something that's obviously a predicate, like with a `?` at the end or a `_p` or something.  I have not done so here, sue me.  TODO LOOK UP HASKELL STYLE GUIDE.
+This is a function that takes two arguments, a `Board` and an integer, and returns a boolean like a predicate should.  We're going to pass in the full board and a specific square, and `openCell` will tell us if the space is already occupied.
 
 Thanks to Haskell's operator love affair, this looks a little more complicated than it is at first glance.  We've seen `$` before - it's function application.  The other funky operator is `!!` - this is just a list subscript.  In a more C-like language, we might have written this exact logic something like `isNothing(b[n - 1])`.  That is, we're asking for the `n - 1`th element of our inner board list `b` (named so via destructuring in the definition: `(Board b)`), and passing it to `isNothing`.  `isNothing` we brought in at the top from `Data.Maybe` and itself is just a predicate which is true if the `Maybe a` passed in is a `Nothing`, as opposed to a `Just a`.
 
@@ -434,6 +449,7 @@ I bet we can work out the type of `handleInput` from the call.  `board` is easy 
 Well, we know we're inside an `IO` monad, and in a series of calls chained together with the monadic `>>=`.  So it's a safe bet this will be another `IO a`, that is, an `IO` monad with some type as a result.  And if we look down the chained call, we end things up with a call to `runGame`.  We've already looked at `runGame` (we're inside of it RIGHT NOW), so we know it's a `Board -> IO ()`.  We're calling it here with no argument, but from the type know it will need a `Board`, and we're passing a monadic result through a chain of functions - so it would follow that the type of each step *must* be `IO Board`.  Lo and behold:
 
 ```haskell
+-- line 46
 handleInput :: Board -> Int -> IO Board
 handleInput board n = do
   let b = playCell board n Human
@@ -445,15 +461,16 @@ handleInput board n = do
 Just as expected!  You're super good at this.  In the body of the function, we're opening another `do` block, and as our first step creating a new binding `b`.  Time to finally examine `playCell`:
 
 ```haskell
+-- line 33
 playCell :: Board -> Int -> Player -> Board
 playCell (Board b) n m = Board $ take (n - 1) b ++ [Just m] ++ drop n b
 ```
 
 From the function call, we expected a type like that - 3 arguments.  We also now see it will give us back a `Board` to store in `b`. The only type we haven't seen used much yet is `Player` - but we know all about that already from discussing `Board`!  It can be a `Human` or a `Computer` and nothing else, and in this case we're processing the human's input - so we just pass in `Human`.  The fully qualified type is simply `Human :: Player`.
 
-In the argument list, we've destructured the `Board` again to access the list of cells inside and assigned letters to the other two[7].
+In the argument list, we've destructured the `Board` again to access the list of cells inside and assigned letters to the other two[^6].
 
-Now, in a C-style language, you'd probably at first approach this task of adding a play to the board by indexing into the list and changing the value inside.  In Haskell, that's a big nope.  Remember when we discussed purity?  That would involve *changing the state of the world outside of the function* - namely the `Board`.  If we did it this way, this function of have wildly different and unpredicable results based entirely on the state of the `Board` when it was called, which is terrifying.  We cannot definitely look at that function and tell you what *exactly* it will do.  If that's not terrifying to you, it SHOULD be.  But, of course, this would be a dumb game[8] if nothing was ever allowed to change.
+Now, in a C-style language, you'd probably at first approach this task of adding a play to the board by indexing into the list and changing the value inside.  In Haskell, that's a big nope.  Remember when we discussed purity?  That would involve *changing the state of the world outside of the function* - namely the `Board`.  If we did it this way, this function of have wildly different and unpredicable results based entirely on the state of the `Board` when it was called, which is terrifying.  We cannot definitely look at that function and tell you what *exactly* it will do.  If that's not terrifying to you, it SHOULD be.  But, of course, this would be a dumb game[^7] if nothing was ever allowed to change.
 
 The way we get around this restriction in any functional language, not just Haskell, is to not attempt to change anything at all.  Instead, we're just going to construct a *brand new* `Board` based on the previous one.  Haskell is garbage-collected, so the old iteration will be automatically dropped by the runtime, no need to call any sort of destructor or free the memory yourself.  That way the game as a whole can continue in a new state and we haven't broken our purity restriction.
 
@@ -466,6 +483,7 @@ This way, for the same inputs we can always guarantee the same outputs.  The cur
 Now that we've stored our shiny new Board with one cell updated, we've got to see how well we did.  The next line of `handleInput` calls out to `checkWin`:
 
 ```haskell
+-- line 57
 checkWin :: Board -> Player -> IO ()
 checkWin board@(Board b) m =
   let
@@ -483,6 +501,7 @@ The `let...in` syntax is a way of creating function-local bindings, not unlike `
 Anyway, before diving into the endgame checking, we're going to set up some computed local bindings to make our life a little easier:
 
 ```haskell
+-- line 59
  let
     bi = withIndicesFrom 0 b
     plays = map fst.filter ((Just m==) . snd) $ bi
@@ -506,17 +525,22 @@ Then, we compare it to the value passed in as `m` - remember when we called the 
 
 Now that we've pared down `bi` to only the cells that have been played, we pass that whole result into `fst` - that is, grab the first value of each tuple.  These are our indices.
 
-The end result that's stored in `plays` is a list of the indices from 0 of all of the places the Human has played.  For example,  `[(0, Nothing), (1, Just Human), (2, Just Computer), (3, Nothing), (4, Just Human)]` will come back with `[1, 4]`.  Neat.
+The end result that's stored in `plays` is a list of the indices from 0 of all of the places the Human has played.  For example, running it on cell list `[(0, Nothing), (1, Just Human), (2, Just Computer), (3, Nothing), (4, Just Human)]` will come back with `[1, 4]`.  Neat.
 
 Now that we've got our packed-up Human plays, we can check to see if that constitutes a win.  The main body of the function, following the `in`, is another `when ... do` shindig like we saw back in `gameOver`.  This monad will execute its body under this condition, and otherwise its a no-op.
 
-How about that condition, then?  Let's see: `foldr ((||) . flip isSubsequenceOf plays) False winStates`.  Aha, it's our good old friend `foldr`.  I unabashedly love this function.
+How about that condition, then?  Let's see:
 
-True to form, we've got three arguments: a transforming function, an initializer, and a collection.  We've looked at two folds before - the trivial example used an `Int` as an initializer that we added numbers to, and the the code from the game used a collection (that we pre-built).  This time around it's simple a `Bool` - `False`.  That's is a-ok too as long as your transforming function returns a `Bool`!  It can be any type at all.  That means this whole fold will return a `Bool` - by definition, the fold always returns the same type as the initializer: `(a -> r -> **r**) -> **r** -> [a] -> **r**`.  And that's what we want, because `when` expects a predicate.
+```haskell
+`foldr ((||) . flip isSubsequenceOf plays) False winStates
+```
+
+Aha, it's our good old friend `foldr`.  I unabashedly love folding.  True to form, we've got three arguments: a transforming function, an initializer, and a collection.  We've looked at two folds before - the trivial example used an `Int` as an initializer that we added numbers to, and the the code from the game used a collection (that we pre-built).  This time around it's simple a `Bool` - `False`.  That's is a-ok too as long as your transforming function returns a `Bool`!  It can be any type at all.  That means this whole fold will return a `Bool` - by definition, the fold always returns the same type as the initializer: `(a -> r -> r) -> r -> [a] -> **r**`.  And that's what we want, because `when` expects a predicate.
 
 Before picking apart the transformer, let's look at `winStates` - the collection we're folding over.
 
 ```haskell
+-- line 53
 winStates :: [[Int]]
 winStates = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]]
 ```
@@ -533,13 +557,14 @@ According to [Hackage](https://hackage.haskell.org/package/base-4.11.1.0/docs/Da
 
 ### `flip`ing out
 
-The last unfamiliar part of this function composition is the word "flip".  This is a simple but useful function that just switches the order in which the arguments are expected.  The way we're calling it in our transformer function, `isSubsequenceOf` receives our `plays` list first, and then the element of `winStates` the fold is currently processing.  However, we want it the other way around - to tell if we've won, we want to check if the winState is a subsequence of all the plays this player has made.  You can win with other non-lined-up plays on the board, they're just irrelevant.  "flip" just swaps the positions of the arguments so we get the logic we want!
+The last unfamiliar part of this function composition is the word "flip".  This is a simple but useful function that just switches the order in which the arguments are expected.  The way we're calling it in our transformer function, `isSubsequenceOf` receives our `plays` list first, and then the element of `winStates` the fold is currently processing.  However, we want it the other way around - to tell if we've won, we want to check if the winState is a subsequence of all the plays this player has made.  You can win with other non-lined-up plays on the board, they're just irrelevant.  `flip` just swaps the positions of the arguments so we get the logic we want!
 
 Finally, we compose that result with the simple operator `(||)`.  This is usually used infix, e.g. `true || false`, but we can use it as a normal prefix function as well bywrapping it in parens.  One value it receives will be the result of our `flip isSubsequenceOf` call, and the other?  Why, that's our initialized `Bool`!  By chaining together all these calls with a big 'ol `OR`/`||`, this transformer will return `True` for the whole collection if any one of these iterations comes back `True` (meaning `plays` contains one of our `winStates`), or remain `False` as we initialized it.
 
 If it was `False`, we didn't win - `checkWin` has nothing else to do.  The code inside the block doesn't execute, we have `()` to return, and control passes back to the caller.  If we *did* win:
 
 ```haskell
+-- line 63
 print board
 putStrLn $ show m ++ " won!"
 exitSuccess
@@ -560,9 +585,17 @@ We're nearing the end of the road, here - if you're still with me, I'm seriously
 
 Well, we're not going to find out here because my computer player is real dumb and plays by dice roll.  It could be fun to try to make a smarter one - I'm leaving that as an exercise to the reader (read: too lazy to do it myself).
 
-Rewinding a little, we entered `handleInput` inside this larger clause: `handleInput board n' >>= compTurn >>= runGame`.  So far, we've updated the world state according to human input, made sure there's still a game going on, and received the new `Board` to work with.  No we're going to pass that brand new world state into `compTurn` via `>>=`, which as we discussed will allow the `Board` to be passed without losing the `IO a` context it started with.  This means we should expect `compTurn` to take a `Board` as input and, because we're in the middle of a `>>=`/`bind` chain, return an `IO Board`:
+Rewinding a little, we entered `handleInput` inside this larger clause:
 
 ```haskell
+-- line 87
+handleInput board n' >>= compTurn >>= runGame
+```
+
+So far, we've updated the world state according to human input, made sure there's still a game going on, and received the new `Board` to work with.  No we're going to pass that brand new world state into `compTurn` via `>>=`, which as we discussed will allow the `Board` to be passed without losing the `IO a` context it started with.  This means we should expect `compTurn` to take a `Board` as input and, because we're in the middle of a `>>=`/`bind` chain, return an `IO Board`:
+
+```haskell
+-- line 36
 compTurn :: Board -> IO Board
 compTurn board@(Board b) = do
   let options = filter (isNothing.snd).withIndicesFrom 1 $ b
@@ -586,36 +619,30 @@ This function is composed from parts we've seen before.  First, we're going to z
 
 In the next line, we introduce the randomness.  This ends up looking similar to how you'd do this in the language of your choice - `randomRIO` from `System.Random` takes a range and will give you a pseudo-random number in that range.  We're using the length of our `options` list, and storing the result to `r`.
 
-Now, we've got to actually make the change.  This is done with `playCell` again - the differences being that instead of user input, we're using `!!` again to index into `options` with the random number we just grabbed, and we're passing in `Computer` instead of `Human`.  Now, `b2` holds our new `Board` with the random play applied.  Afterwards we can just inform the user where the computer went[FOOTNOTE]. With all that taken care of, we can see if the computer managed to win the thing with `checkWin`.  If it did, `checkWin` will handle ending the game for us, and if not, we `return` again.  No need to call `gameOver` again here, because `runGame` does so first - and our pipeline `handleInput >>= compTurn >>= runGame` is sending us right back up there.
+Now, we've got to actually make the change.  This is done with `playCell` again - the differences being that instead of user input, we're using `!!` again to index into `options` with the random number we just grabbed, and we're passing in `Computer` instead of `Human`.  Now, `b2` holds our new `Board` with the random play applied.  Afterwards we can just inform the user where the computer went[^8]. With all that taken care of, we can see if the computer managed to win the thing with `checkWin`.  If it did, `checkWin` will handle ending the game for us, and if not, we `return` again.  No need to call `gameOver` again here, because `runGame` does so first - and our pipeline `handleInput >>= compTurn >>= runGame` is sending us right back up there.
 
 ### The Thrilling Conclusion
 
 We did it!  I'm all out of code to unpack.  `runGame` has everything it needs to alternate human turns and computer turns until somebody wins or we run out of spaces.  Haskell ain't no thang :)
 
-Th-th-th-that's all, folks![9]
+Th-th-th-that's all, folks![^9]
 
 ### Footnotes
 
-TODO check yer numbers, foo'
+[^1]: I hesitated to say [Great Good](http://learnyouahaskell.com/) because that's pretty wishful thinking in my case - Hopefully Not For Nothing is more accurate.  This is a great book nonetheless if you're not ready to shell out $60 for the First Principles book.
 
-[1] Kinda nuts that I had like 12,000 words to say about 94 lines of code
+[^2]: Terse, though - 12,000 words to say about it, apparently
 
-[1] I hesitated to say [Great Good](http://learnyouahaskell.com/) because that's pretty wishful thinking in my case - Hopefully Not For Nothing is more accurate.  This is a great book nonetheless if you're not ready to shell out $60 for the First Principles book.
+[^3]: I do not mean this figuratively
 
-[3] I do not mean this figuratively
+[^4]: Haskell [Prelude](https://hackage.haskell.org/package/base-4.11.1.0/docs/Prelude.html#v:-36-)
 
-[4] I had to fight down the urge to start this next sentence "The IO Monad can be thought of as a..."
+[^5]:  Should I have optimized away the extra `gameOver` check in this case?  Most definitely.  Does it make a big enoug difference to matter here?  Highly unlikely.  If this isn't fast enough for you, cut down on the stimulants.
 
-[5] Haskell [Prelude](https://hackage.haskell.org/package/base-4.11.1.0/docs/Prelude.html#v:-36-)
+[^6]: This was actually one of my bigger beefs with Haskell as a beginner.  In other languages, I've gotten used to choosing descriptive (but still short) names for any bindings I create.  It seems, though, that Good Haskell Style involves lots and lots of single-letter stand-ins, which goes against every instinct I have.  I feel this inhibits readability for little gain - Haskell is terse enough as it is.  I'd be interested to hear thoughts about this for more experienced Haskellers.
 
-[6] We know it's an `IO ()` because we're inside a `do` block in an `IO ()`, it performs IO of its own, and it doesn't have any value coming back up.  It just exists to print the value to the console.  So when the compiler comes hungrily munching through `runGame`, `print` just evaluates to `()`.
+[^7] Well, more dumb - TicTacToe isn't exactly a groundbreaking paragon of high strategy to begin with
 
-[7] This was actually one of my bigger beefs with Haskell as a beginner.  In other languages, I've gotten used to choosing descriptive (but still short) names for any bindings I create.  It seems, though, that Good Haskell Style involves lots and lots of single-letter stand-ins, which goes against every instinct I have.  I feel this inhibits readability for little gain - Haskell is terse enough as it is.  I'd be interested to hear thoughts about this for more experienced Haskellers.
+[^8] In the interest of full disclosure, I brushed off my skillz for this post and added the numbers instead of underscores and the printout for the computer player
 
-[8] Well, more dumb - TicTacToe isn't exactly a groundbreaking paragon of high strategy to begin with
-
-[FOOTNOTE] In the interest of full disclosure, I brushed off my skillz for this post and added the numbers instead of underscores and the printout for the computer player
-
-[9] If this is a copyrighted phrase a) I'm sorry and b) come at me, bruh
-
-[10] Yeah, yeah, it already is, save it
+[^9] If this is a copyrighted phrase a) I'm sorry and b) come at me, bruh
