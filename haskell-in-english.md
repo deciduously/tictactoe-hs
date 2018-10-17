@@ -3,21 +3,23 @@
 
 ## The Intro
 
-A little over a year ago I got it in my head to learn me a Haskell[^1], just for the (minimal) street cred, and I spent a couple weeks with the (rather excellent) [book](http://haskellbook.com/). After several weeks of exercises, I wrote a pretty mean ~100 lines[^2] of TicTacToe just to prove to myself I could do *something* after all that, and promptly never touched it again.  This was in spring 2017, which means it should be no problem to tell you how it works here now, a little over a year later, having not touched any Haskell at all since.  No problem.
+A little over a year ago I spent a couple weeks with the (rather excellent) [Haskell book](http://haskellbook.com/). After several weeks of exercises I wrote a pretty mean TicTacToe in ~100 lines[^1] just to prove to myself I could do something after all that and promptly never touched the language again.  Surely my loss, but there it is. This was in spring 2017 which means it should be no problem to tell you how it works here now, a little over a year later, having not touched any Haskell at all since. No problem.
 
-As it turns out Haskell is just not that bad.  What can be scary is how different it can be to work with than what you're used to, so you hit a lot more walls at the very beginning, and it can feel difficult knowing how to even go about implementing something simple like this.  Your instincts won't all apply anymore.  Hopefully seeing it in English too to will help you (and me, again) get going!
+As it turns out, in retrospect Haskell is just not that bad. What can be scary is how different it can be to work with than what you're used to so you hit a lot more walls at the very beginning.  At least personally, all the theory left me with no idea how to even go about implementing something simple like this until I sat down and tried it.  Now you, the lucky reader, can follow me down the rabbit hole!
 
-As opposed to a traditional tutorial, this is top-down, entry-point first, let's see what's here sort of deal.  I will step through every line of code as it's called and explain what's going on.
+As opposed to a traditional tutorial this is top-down, let's see what's here sort of deal. I’m going to start with `main`, the first thing run when you execute the program, and will step through every line of code as it's called and explain what's going on.
 
-I do not remember how this thing works (or much of how Haskell works), so I'm going to write this as I read it and see if we get there in the end.  So, to recap, this is an exercise in re-reading old code I ostensibly wrote in a crazy language I've since forgotten and never really knew.  Let's see what happens!  ¡Vámonos!
+I do not remember how this program works (or much of how Haskell works), so I'm going to write this as I read it and see if we get there in the end. To recap, this is an exercise in re-reading old code I ostensibly wrote in a crazy language I've since forgotten and never really knew.  ¡Vámonos!
 
 ## The Program
 
-This is a dirt simple TicTacToe game played on the command line against a randomly playing computer opponent.  Fun, right?  Hours, nay, DAYS of entertainment await.  A project like this is usually my go-to "hello world" in a new language, because at the end it demonstrates you can leverage the language's various facilities at least a little, like control flow and IO and overall structure.  For Haskell, it was more a "TTFN, world", but the point stands.  The full source can be found [here](https://github.com/deciduously/tictactoe-hs/blob/master/src/Main.hs), the entirety of which will appear in snippet-form below.
+This is a dirt simple Tic-Tac-Toe game played on the command line against a computer opponent that just plays randomly[^2]. Fun, right? Hours if not days of entertainment await. A project like this is usually my go-to "hello world" in a new language because at the end it demonstrates you can leverage the language's various facilities at least a little, like control flow and IO. For Haskell it was more a "TTFN, world", but the point stands. 
 
-If you have `stack` installed, you can open a terminal in the project directory and run `stack exec ttt` to play a compiled executable or `stack ghci` to open a repl from which you can interact directly with the functions defined (including `main`).
+The full source can be found [here](https://github.com/deciduously/tictactoe-hs/blob/master/src/Main.hs), the entirety of which will appear in snippet-form below.
 
-Here's a sample game, as executed from the repl:
+If you have `stack` installed TODO ADD LINK TO STACK you can open a terminal in the project directory and run `stack exec ttt` to play a compiled executable or stack ghci to open a REPL from which you can interact directly with the functions defined (including main).
+
+Here's a sample game, as executed from the REPL:
 
 ```
 *Main> main
@@ -63,15 +65,24 @@ Your move: 7
 Human won!
 ```
 
-Suck it, random number generator.
+Suck it random number generator.
 
 ## The Good Stuff
 
 ### First steps
 
-Haskell programs are organized into modules.  Opening up `Main.hs`, we see line one states: `module Main where`, followed by several imports.  Ok, fairly standard stuff outside of Haskell too.  Functionality is brought in explicitly from other modules as needed.  The module is the first term, followed by the functions we're importing.  This program only has the one module, but if there were more, Main would be a good place to start our walkthrough anyway.  Programmers intuition or something.
+Haskell programs are organized into modules.  If you’re coming from an object-oriented world, it’s not quite analogous to a class - it’s more a way of describing a namespace of types. In this way you do encapsulate functionality, but not quite as rigidly as a class does as a “blueprint” for an object.  Each module consists of “entities” like functions and types, which can be imported into other modules for use.
 
-I see some type declarations right under the import statements, but I don't really understand what needs modelling yet, so instead I'm going to skim down and see which actual function is called first when you execute this.  This is significant in any language, but in Haskell your whole program *is* this value.  Or your module export, at least.  Your task is to define the result of computing this value.  In `Main.hs`, this value is also called `main` and lives at the bottom of the file:
+Opening up Main.hs, we see line one states: 
+
+```haskell
+module Main where
+```
+
+followed by several imports. The module is the first term, followed by the functions we're importing. This program only has the one module, but if there were more Main would be a sensible place to start looking for our program entry.  Call it programmers intuition or something.
+
+I see some type declarations right under the import statements but I don't really understand what needs modelling yet, so instead I'm going to skim down and see which actual function is called first when you execute this.  I did promise in the intro I’d do that. This entry-point is significant in any language but in Haskell your whole program is this value - the body of `main` will call some other functions but in Haskell, everything is a pure mathematical transformation. The task is to define `main` so that evaluating it plays a game of Tic Tac Toe with you to fully resolve. In `Main.hs` this value is also called `main` and lives at the bottom of the file:
+
 
 ```haskell
 -- line 93
@@ -81,23 +92,27 @@ main = do
   runGame board
 ```
 
-In Haskell, every value (functions count, they evaluate to values) hs a type.  Haskell goes hard on the types, in a way that you've likely never come across if things like Java and C++ are as heavy a type system as you've ever worked with.  The compiler is actually magic[^3] and does not require annotations - it's considered good style for top-level functions in a module but they can be omitted for internal values.  However, they are a huge help if you start getting bogged down in compiler errors!  A type annotation has the name first, followed by the double colon `::`, followed by the type, and you'll see them all over Haskell code.
+In Haskell every value has a type. Functions count because they evaluate to values.   The compiler doesn’t need to worry about unexpected mutation and side effects, so every function can simply be viewed as its return value much more than in an imperative language.  Haskell also goes hard on the types in a way that you've likely never come across if languages like Java or C++ are as heavy a type system as you've ever worked with. The compiler is actually magic (no, really, magic) and does not require annotations - it's considered good style for top-level functions in a module but they can be omitted for internal values. However, they are a huge help if you start getting bogged down in compiler errors! A type annotation has the name first, followed by the double colon `::`, followed by the type, and you'll see them all over Haskell code.
 
-Our `main` value has the type `IO ()`.  Right off the bat, we get a taste of some of funky fresh Haskell weirdness, and I'm actually going to have to digress for a moment to set the scene.  Stay with me, I promise it's just a little bit.
+Our main value has the type `IO ()`. Right off the bat we get a taste of some of funky fresh Haskell weirdness and I'm actually going to have to digress for a moment to talk more about this type before we dive in. Stay with me, I promise it's just a little bit.
 
 #### Setting the scene: A Digression on `IO ()`
 
-I'm going to preface this by saying I am *not* making this a blog post about Monads, if you've heard the good advice about genereally running away from those.  I do, though, need to talk about them at least a little (we can gloss through most of the details but theres a `(>>=)` or two just sitting there), and they're really not a scary thing at all.  This is the super simple shakedown, and it's only a shakedown becase I thought it sounded good after "super simple".
+I'm going to preface this by saying I am not making this a blog post about Monads if you've heard the good advice about generally running away from those. I do need to talk about them at least a little (we can gloss through most of the details but there’s a `(>>=)` or two just sitting there), and they're really not a scary thing at all. This is the super simple shakedown, and it's only a shakedown because I thought it sounded good after "super simple".
 
-IO is a monad.  This means it's a type that can have other things that are also monads inside of it.  In fact, it sometimes *is* those other things!  Our whole program, `ttt`, is an `IO ()`, which is a `Monad`.
+IO is a monad. This means it's a type that can have other things that are also monads inside of it. In fact, it sometimes is those other things! Our whole program is an `IO ()`, which is a Monad.
 
-Haskell is a *functional* programming language, which is really a rather broad category of languages that emphasis a style of programming in which the function is the basic unit of computation.  In Haskell, this is furhter constrained by demanding that every function be a *pure* function.  If you're not familiar with the terminology, "pure" means that the function does not rely upon or act on values outside of its own body.  Put another way, the function will always return the same output for a given input because there is nothing else the output depends on, and you're guaranteed that nothing outside of itself will change in the course of running it.  The savvy among you might already be asking "but wait!   There are all kinds of things a function might want to do outside of itself.  How about printing a letter to the screen or responding to any external input?"  To which Haskell says "Oh, shoot.  We hadn't thought of that.  Pack it up!"  Good post everyone.
+As we’ve stated, Haskell is a functional programming language which is really a rather broad category of languages that emphasise a style of programming in which the function is the basic unit of computation. In Haskell this is further constrained by demanding that every function be a pure function. If you're not familiar with the terminology "pure" means that the function does not rely upon or act on values outside of its own body. Put another way, the function will always return the same output for a given input because there is nothing else the output depends on and you're guaranteed that nothing outside of itself will change in the course of running it. The entire result of the computation is 100% determined by the arguments themselves.  The savvy among you might already be asking "but wait! There are all kinds of things a function might want to do outside of itself. How about printing a letter to the screen or responding to any external input?" To which Haskell says "Oh, shoot. We hadn't thought of that. Pack it up!" Good post everyone.
 
-...Hah!  Got you, didn't I.  The Haskell solution for this little technicality of actually having to be useful has to do with the types that I raved about.  I read this as "IO Unit".  The first part means it's of type IO, so it does something with IO (Input/Output).  But this is Haskell, and we need to know what *type* this monad returns so that we can use it within our typed functional program (spoiler alert: specifically within other monads).  Our compiler is just doing it's happy ol' thing evaluating values by executing functions as it sees them, we've got to keep the big computation rollin'! .  "Doing IO" isn't a type, so Haskell has something called the `IO` Monad.  For this program right now what you need to know is that an `IO` monad like `main` will do something with IO in its body but also evaluates to something inthe context of your purely functional program.  The `Monad` is a way of encapsulating that idea -  whatever it does will happen inside of it and then you get this second type back. A monad can be thought of as an "action" or "computation".  It isn't the action itself, it's just the concept of carrying out that action.  It's a noun through and through, just a "thing" we can pass around in our program  (NOT a function, though functions can return Monads), but it's a little weird so don't worry if that's not sitting well with you yet.  Monads turn out to be a great way to compose functionality without sacrificing that sweet, saucy purity.
+...Hah! Got you, didn't I. The Haskell solution for this little technicality of actually having to be useful has to do with how our types are set to Maximum Cool.  I read this as "IO Unit". The first part means it's of type IO, so it does something with IO (Input/Output). But this is Haskell, and we need to know what type this monad returns so that we can use it within our typed functional program (spoiler alert: specifically within other monads.) Our compiler is just doing it's happy ol' thing evaluating values by executing functions as it sees them, we've got to keep the big computation rolling! "Doing IO" isn't a type, so Haskell has something called the IO Monad. For this program right now what you need to know is that an IO monad like main will do something with IO in its body but also evaluates to something in the context of your purely functional program. The Monad is a way of encapsulating that idea - whatever it does will happen inside of it and then you get this second type back. A monad can be thought of as an "action" or "computation." It isn't the action itself, it's just the concept of carrying out that action. It's a noun through and through, just a "thing" we can pass around in our program (NOT a function, though functions can return Monads), but it's a little weird so don't worry if that's not sitting well with you yet. Monads turn out to be a great way to compose functionality without sacrificing that sweet, saucy purity.
 
-Don't worry too much if I lost you here, really.  For our use in this program, the IO Monad is the (slightly confusing) type of "doing input and/or output" and it will yield a thing when its done.  That type it carries is the second term.  For `main`, we don't have anything, so we return something of type `()`, the empty tuple (there is only one thing, `()` - the empty tuple).  Putting them together, we have our type `IO ()`.  This is akin to `void` in C, or, well, `unit | ()` in a bunch of diferent languages.  Zilch.
+That probably doesn’t sit well with you.  The reason is that it’s a bald-faced lie.  The Monad structure is allowing us to contextualize the world outside the program in a really handy way and pass it around, and building up how that’s working out is outside the scope of this tutorial, best left to somebody who knows a lot more about what they’re talking about, and not at all on a need-to-know basis to utilize monadic IO.  We’re using it to tag every single part of our program that does any IO - you can think of that `IO` part as a phantom parameter you can’t use that’s the entire outside world.  It’s not completely like what’s going on, but its not completely unlike it either!  It’s allowing us to keep our “100% of the result of this function is determined by the arguments themselves” constraint and still interact with a user.
 
-For a superior but still blitz-pace Monad (etc.) run-through with pictures, [this blogpost](http://adit.io/posts/2013-04-17-functors,_applicatives,_and_monads_in_pictures.html) will get you up to speed surprisingly quickly, from the author of ["Grokking algorithms"](http://a.co/ba5icnv).
+For our use in this program, the IO Monad is the (slightly confusing) type of "doing input and/or output" and it will yield a thing when it’s done. The type it yields is the second term. For main, we don't have anything, so we return something of type `()`, the empty tuple (there is only one possible thing, `()` - the empty tuple). Putting them together, we have our type `IO ()`. This is akin to void in C, or, well, `unit` or `()` in a bunch of different languages. Zilch.
+
+As a side note, an `IO ()` on its own doesn’t do anything unless it’s been executed inside `main`!  That’s the only way to get it to do something.
+
+For a superior but still blitz pace Monad (etc.) run-through with pictures [this blogpost](http://adit.io/posts/2013-04-17-functors,_applicatives,_and_monads_in_pictures.html) will get you up to speed surprisingly quickly from the author of ["Grokking algorithms"](http://a.co/ba5icnv).
 
 ### Back to the Grizz
 
