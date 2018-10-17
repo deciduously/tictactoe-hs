@@ -116,13 +116,13 @@ For a superior but still blitz pace Monad (etc.) run-through with pictures [this
 
 ### Back to the Grizz
 
-That wasn't too terrible, right?  Or maybe it was, I don't have a response mechanism from any sort of audience as I'm writing this.  Let me know.  I definitely regret saying "Grizz" already, no need to mention that.  It's not a real word.
+That wasn't too terrible, right? Or maybe it was, I don't have a response mechanism from any sort of audience as I'm writing this. Let me know. I definitely regret saying "Grizz" already, no need to mention that. It's not a real word.
 
-Anyway, let's look back up at `main :: IO ()`.  From the type, we know it will perform IO, and give us NOTHING `()` back.  Friggin' `main`, pull a little weight once in a while, huh?
+Anyway, let's look back up at `main :: IO ()`. From the type we know it will perform IO and give us NOTHING () back. Friggin' main, pull a little weight once in a while, huh?
 
-The definition is directly below.  You'll note I haven't called it a function - it isn't one.  It's just an `IO ()`.  A noun, not a verb - a thing that performs some IO to evaluate.  My favorite kind of TicTacToe, luckily!  We can tell because the type doesn't have an arrow `->` in it.  All functions are mappings from a type to another type (or more), like `Int -> Int` or `Int -> ()`.  Main just does our IO and has `()` to show for it.
+The definition of `main` is directly below the type declaration.  Just to drive the point home once more - I’m not calling it a function.  It isn’t one. It's just an `IO ()`. A noun, not a verb - a thing that performs some IO to evaluate.  We can tell because the type doesn't have an arrow -> in it. All functions are mappings from a type to another type (or more), like `Int -> Int` or `Int -> ()`. Main just does our input and/or output and has `()` to show for it.
 
-The name to the left of the defintion, the `=`, and the body to the right.  Haskell is like Python in that its scopes are whitespace delimited.  Anything indented is inside the parent scope.  Our `main` is going to `do` a few things.
+At this point I’ll note that Haskell is like Python in that its scopes are delimited by semantic whitespace.  This decision is likely to bring up emotions, either positive or negative depending on your background. I’m not touching that talk, ‘tis what ‘tis.   Anything indented is inside the parent scope. Our main is going to do a few things.
 
 #### Gettin Your Sequence On: A Second Digression on `do`
 
