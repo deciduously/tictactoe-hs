@@ -77,9 +77,18 @@ Opening up Main.hs, we see line one states:
 
 ```haskell
 module Main where
+
+import           Control.Monad (forever, when)
+import           Data.Bool     (bool)
+import           Data.Char     (digitToInt)
+import           Data.List     (isSubsequenceOf)
+import           Data.Maybe    (isJust, isNothing)
+import           System.Exit   (exitSuccess)
+import           System.IO     (hFlush, stdout)
+import           System.Random (randomRIO)
 ```
 
-followed by several imports. The module is the first term, followed by the functions we're importing. This program only has the one module, but if there were more Main would be a sensible place to start looking for our program entry.  Call it programmers intuition or something.
+The module is the first term, followed by the functions we're importing. This program only has the one module, but if there were more Main would be a sensible place to start looking for our program entry.  All other modules listed here are availble in Haskell's standard library, and I'll discuss each in turn as we use it during the walkthrough.
 
 I see some type declarations right under the import statements but I don't really understand what needs modelling yet, so instead I'm going to skim down and see which actual function is called first when you execute this.  I did promise in the intro I’d do that. This entry-point is significant in any language but in Haskell your whole program is this value - the body of `main` will call some other functions but in Haskell, everything is a pure mathematical transformation. The task is to define `main` so that evaluating it plays a game of Tic Tac Toe with you to fully resolve. In `Main.hs` this value is also called `main` and lives at the bottom of the file:
 
@@ -124,11 +133,12 @@ At this point I’ll note that Haskell is like Python in that its scopes are del
 
 #### Gettin Your Sequence On: A Second Digression on `do`
 
-  `do` is actually syntactic sugar for some more monadic jazz, so true to form this is not a full explanation, but rather a taste.  We can use this structure inside any monad (like IO) (if you didn't follow me down the first digression, IO is a monad, we're in one right now, it's going to be OK), and it lets us "fake" an imperative style of programming.   Those same savvy from up above may have noticed `main` doesn't look like what you'd think a functional program should, doing things *and then* other things all imperatively and stuff.  That's not how a functional program works, it's supposed to just compose the results of other functions!  In fact, it's all just a big IO monad defined by one expression chained together with the [`(>>)`/'then'](https://en.wikibooks.org/wiki/Haskell/do_notation) operator.  Pure and strongly typed, like GHC demands.  The `do` notation just helps it look cleaner.
-  
-If I lost you there, that's ok.  The takeaway is that if you're in a monad like `main :: IO ()`, you can use generally `do` to do some things sequentially and that's A-OK with Haskell.  This is what allows monads to, for instance, respond to input.  Inside the do block, both things I call out to are also `IO` monads.  The total value of `main`, i.e. the result of running the executable, relies on some external input to compute, and it's going to need to respond based on whatever input it receives.
+`do` is actually syntactic sugar for some more monadic jazz, so as with my first digression this is not a full explanation but rather a taste - just enough to keep moving. We can use this structure inside any monad (like IO -if you didn't follow me down the first digression, IO is a monad, we're in one right now, it's going to be okay) and it lets us "fake" an imperative style of programming. You may have noticed main doesn't look like what you'd think a functional program should, doing things and then other things all imperatively and stuff. We’re supposed to be operating in this super pure mathematical world of function evaluation and nothing else! That's not how a functional program works, it's supposed to just compose the results of other functions.
 
-Whew.  Another token, another couple paragraphs of exposition.  So, what is it we're `do`ing?  The first statement is something I finally don't have a whole paragraph about.  With the line `let board = freshBoard` we're creating a binding of the name `board` and assigning it the value `freshBoard`.  What's `freshBoard`, you ask?  Why, lines 27 and 28 of `Main.hs` of course!
+In fact, we still are.  This is all just a big IO monad defined by one expression chained together with the `(>>)`/'then' operator. Pure and strongly typed, like GHC (our magical compiler) demands. The do notation just helps it look cleaner while we pass around our “phantom outside world” parameter in the course of the computation through several successive IO operations.
+The takeaway is that if you're in a monad like `main :: IO ()`, you can generally use do to do some monadic things (like IO) sequentially and that's a-okay with Haskell. This is what allows monads to, for instance, respond to input based on the contents. Inside the do block both things I call out to are also IO monads. The total value of main, i.e. the result of running the executable, relies on some external input to compute and it's going to need to respond based on whatever input it receives.
+
+Whew. Another token, another couple paragraphs of exposition. So, what is it we're doing? The first statement is something I finally don't have a whole paragraph about. With the line `let board = freshBoard` we're creating a binding of the name board and assigning it the value `freshBoard`. What's `freshBoard`, you ask? Why, lines 27 and 28 of Main.hs of course!
 
 ### Leaving `main`
 
@@ -148,9 +158,11 @@ data Player = Human | Computer deriving (Eq, Show)
 
 And there you have it.  The brackets around `Maybe Player` mean that it's a list of `Maybe Player.`.  Obvious, right?  I'm joking, I'll talk about it.
 
-A `Maybe` is a useful type allowing you to encode the concept of nullablillity into the type system, instead of as a `null` value that can get thrown around.  Similar concepts appear in other languages like Rust and Swift (and OCaml and Scala and F# and SML and Elm and etc, etc - it's not a new or Haskell-specific concept is the point here).  A `Maybe` can either be `Nothing` or a `Just <something>`, in our case a `Player` from the type.  `Maybe Player` is actually also a type - `Maybe` is a *higher-kinded type* meaning it can be (nay, WILL be!  MUST be!) parameterized with a type.  The word `kind` here refers to *how many layers* of parametrization this type requires.  Without a type parameter, `Maybe` is not a complete, usable type at all - every `Maybe` will carry a specific type.  `Maybe` has *kind* `* -> *`, meaning a mapping from something to something, and when `Player` is that `*` something type, it becomes the fully resolved type `Maybe Player`, with *kind* `*` that can be fully evaluated in other functions in our quest for the One True Value.  Remember earlier when I called the compiler magic?  It goes further... `Either`, which is *kind* `* -> * -> *`takes two type-level arguments, can (and does) create curried types by only supplying one parameter!  For example `Either Player` is a partially resolved type that still has kind `* -> *`.  These are *type-level functions*.  It's cool stuff, but not important for this program.
+A `Maybe` is a useful type allowing you to encode the concept of nullablillity into the type system, instead of as a `null` value that can get thrown around.  Similar concepts appear in other languages like Rust and Swift (and OCaml and Scala and F# and SML and Elm and etc, etc - it's not a new or Haskell-specific concept is the point here).  A `Maybe` can either be `Nothing` or a `Just <something>`, in our case a `Player` from the type.  `Maybe Player` is actually also a type - `Maybe` is a *higher-kinded type* meaning it must parameterized with a type before it can be used in the context of your program.
 
-Alright, armed with at least some of that knowledge, we can take a look at `Board $ replicate 9 nothing`.  This is nice and neat in that even though it looks a little incantation-y, it's got a nice English ring to it.  It's almost like reading a sentence, or at least pseudocode.  You'll want to know, going forward, about `$` - this is just function application with different precedence/associatvity rules.  Its `Board(replicate 9 nothing)`.  It seems redundant at first, but the low precedence and right-associativity let you omit parens: `f $ g $ h x  =  f (g (h x))`[^4].  It looks funky but if I recall it felt natural pretty quickly.  Buckle up, because there's a little more token soup below.  Haskell is not shy about esoteric operators.
+The word `kind` here refers to *how many layers* of parametrization this type requires.  Without a type parameter, `Maybe` is not a complete, usable type at all - every `Maybe` will carry a specific type.  `Maybe` has *kind* `* -> *`, meaning a mapping from something to something, and when `Player` is that `*` something type, it becomes the fully resolved type `Maybe Player`, with *kind* `*` that can be fully evaluated in other functions in our quest for the One True Value.  Remember earlier when I called the compiler magic?  It goes further... `Either`, which is *kind* `* -> * -> *`takes two type-level arguments, can (and does) create curried types by only supplying one parameter!  For example `Either Player` is a partially resolved type that still has kind `* -> *`.  These are *type-level functions*.  What else have we used that has a type that looks like this?  Why, our new fiend the IO monad of course!  It can be an `IO ()` or an `IO Int` or anything you like, but it's still an IO monad, with kind `* -> *` until it's specified further.  It turns out `Maybe` is *also* a monad, but there are higher-kinded types which aren't as well.  It's cool stuff, but not important for this program.
+
+Alright, armed with at least some of that knowledge, we can take a look at `Board $ replicate 9 nothing`.  This is nice and neat in that even though it looks a little incantation-y, it's got a nice English ring to it.  It's almost like reading a sentence, or at least pseudocode.  You'll want to know, going forward, about `$` - this is just function application with different precedence/associatvity rules.  Its `Board(replicate 9 nothing)`.  It seems redundant at first, but the low precedence and right-associativity let you omit parens: `f $ g $ h x  =  f (g (h x))`[^3].  It looks funky but if I recall it felt natural pretty quickly.  Buckle up, because there's a little more token soup below.  Haskell is not shy about esoteric operators.
 
 `replicate 9 nothing` isn't too hard to tease apart.  Function application is just via spaces in Haskell (it's a function-oriented language, after all), so we're calling `replicate` with the arguments `9` and `Nothing` instead of `replicate(9, Nothing)`.  And `Board` wanted a list of `Maybe Player`s.  `replicate` makes uses the first argument to decide how many "replicas" of the 2nd to make, and returns them as a list.  Which is what we said a `Board` held. Ok, cool, so a `freshBoard` is a `Board` has nine cells that *can* hold a `Player`, but don't currently.  That's the whole data structure for the app.  We get a lot of guarantees for free at compile time already from the definition- definitely more than your average vector or array.
 
@@ -646,9 +658,7 @@ Th-th-th-that's all, folks![^9]
 
 [^2]: Terse, though - 12,000 words to say about it, apparently
 
-[^3]: I do not mean this figuratively
-
-[^4]: Haskell [Prelude](https://hackage.haskell.org/package/base-4.11.1.0/docs/Prelude.html#v:-36-)
+[^3]: Haskell [Prelude](https://hackage.haskell.org/package/base-4.11.1.0/docs/Prelude.html#v:-36-)
 
 [^5]:  Should I have optimized away the extra `gameOver` check in this case?  Most definitely.  Does it make a big enoug difference to matter here?  Highly unlikely.  If this isn't fast enough for you, cut down on the stimulants.
 
