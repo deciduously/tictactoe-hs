@@ -189,7 +189,7 @@ Great!  So to recap, we've now stored a `Board` of 9 cells that might contain a 
 
 ### The Third Line of `main`
 
-Now we're truckin' along!  Our `freshBoard` is ready for some killer moves.  The next line is a simple function call reads `runGame board` - easy enough.  We're going to pass our new board into the `runGame` function.  What does that look like?
+Now we're cooking with gas!  Our `freshBoard` is ready for some killer moves.  The next line is a simple function call reads `runGame board` - easy enough.  We're going to pass our new board into the `runGame` function.  What does that look like?
 
 ```haskell
 -- line 75
@@ -212,11 +212,11 @@ runGame board = forever $ do
     _   -> putStrLn "Only one digit allowed!"
 ```
 
-That's a bulky one.  Let's take it one step at a time.  For starters, the type itself should look familiar enough by now.  `runGame` is a `Board -> IO ()`, which is to say a function (because of the `->` we know it's a mapping from one thing to another) that takes a `Board`, and returns an IO monad carrying Unit, or nothing at all, just like `main`.
+That's a bulky one.  Let's take it one step at a time.  For starters, the type itself should look familiar enough by now.  `runGame` is a `Board -> IO ()` which is to say a function that takes a `Board` and returns an IO monad carrying Unit, or nothing at all, just like `main`. We know it's a function this time because of the `->` - it's a mapping from one thing to another.
 
-Diving in to the defintion, we see we're going to define another `do` block, but it's going to get wrapped inside a `forever`.  If you recall, the `$` operator is just regular old function application, so everything after it in our definition is inside the `forever`.  Back at the top of the file, you can see we brought it in from the `Control.Monad` module, so, you guessed it, it's a monad thing.  Luckily this one is simple - it just means we want to execute this monad forever.  I bet you already got that.  If you've made any kind of game before, you'll recognize this as the game loop, just functional flavored.  We're going to do whatever's inside this function over and over again until something somewhere tells us the game is over.
+Diving into the definition we see we're going to define another `do` block, but it's going to get wrapped inside a `forever`.  We already know the `$` operator is just regular old function application, so everything after it in our definition is inside the `forever`.  Back at the top of the file you can see we brought it in from the `Control.Monad` module, so, you guessed it, it's a monad thing.  Luckily this one is simple - it just means we want to execute this monad forever.  I bet you already got that.  If you've made any kind of game before, you'll recognize this as the game loop, just functionally flavored.  We're going to do whatever's inside this function over and over again until something somewhere tells us the game is over.
 
-What's inside this function, then?  The next line immediately calls out to another function called `gameOver` and passes it the board, which right now is fresh.  Let's look at `gameOver`.
+What's inside this function, then?  The next line immediately calls out to another function called `gameOver` and passes it the board, which right now is fresh.  Let's look at `gameOver`:
 
 ```haskell
 -- line 68
@@ -228,7 +228,7 @@ gameOver board@(Board b) =
     exitSuccess
 ```
 
-Well, that type signature should be getting repetitive.  This is another one that takes a `Board`, does some sort of IO, and doesn't pass anything back to the caller.  The token soup in the second line is just destructuruing syntax - remembering that our `Board` is the only argument, all `board@(Board b)` does is allows us to refer to both the whole structure as `board` as well as specifically the inside list of cells as `b`.
+Well, that type signature should be getting repetitive.  This is another one that takes a `Board`, does some sort of IO, and doesn't pass anything back to the caller.  The token soup in the second line is just destructuring syntax.  Our `Board` is the only argument, and all `board@(Board b)` does is allow us to refer to both the whole structure as `board` (with type `Board`) as well as specifically the inside list of cells as `b` (with type `[Maybe Player]`).
 
 The body of this function is straightforward to read.  `when ( all isJust b)` we're going to `do` something.  `when` is another thing we imported from `Control.Monad`, but it's also not scary and does what you'd expect - checks the predicate and enters the block if true.  Remember that each one off the nine cells is a type of `Maybe Player`, and a `Maybe a` can be either `Just a` or `Nothing`, using `a` as a stand-in for any type.  `isJust` is a helper predicate from `Data.Maybe` (imported, like a fine wine) that returns true if what was passed in is the `Just` variety of `Maybe`.  We passed it along with our list of cells `b` into `all`, which is like a big ol' `AND`/`&&` - it returns the false the first time it hits a false, or the whole expression is true.
 
