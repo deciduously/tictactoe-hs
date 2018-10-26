@@ -644,7 +644,7 @@ gameOver b
 return b
 ```
 
-If we've gotten here, it means `checkWin` didn't find a winning board configuration, so before we move on we call `gameOver` again to see if this play resulted in a draw, and if not, we `return b`.  `return` is a little different than you're used to - it specifically means to pass back the value given wrapped up in the `IO` monad - this monad is of type `IO Board`.  This is how we pass the result back to the main `runGame` loop, having determined that this play didn't end the game in either a win or a draw.
+If we've gotten here, it means `checkWin` didn't find a winning board configuration, so before we move on we call `gameOver` again to see if this play resulted in a draw, and if not, we `return b`.  `return` is a little different than you're used to - it specifically means to re-wrap our `Board` type in our `IO` context - the whole point of a monad.  This is how we pass the result back to the main `runGame` loop, having determined that this play didn't end the game in either a win or a draw.
 
 ### RNG Rover
 
