@@ -74,7 +74,7 @@ Suck it random number generator.
 
 Haskell programs are organized into modules.  If you’re coming from an object-oriented world, it’s not quite analogous to a class - it’s more a way of describing a namespace of types. In this way you do encapsulate functionality, but not quite as rigidly as a class does as a “blueprint” for an object.  Each module consists of “entities” like functions and types, which can be imported into other modules for use.
 
-Opening up Main.hs, we see line one states:
+Opening up Main.hs, we see the following declarations:
 
 ```haskell
 module Main where
@@ -89,10 +89,9 @@ import           System.IO     (hFlush, stdout)
 import           System.Random (randomRIO)
 ```
 
-The module is the first term, followed by the functions we're importing. This program only has the one module, but if there were more Main would be a sensible place to start looking for our program entry.  All other modules listed here are availble in Haskell's standard library, and I'll discuss each in turn as we use it during the walkthrough.
+The module is the first term, followed by the functions we're importing. This program only has the one module, but if there were more Main would be a sensible place to start looking for our program entry.  All other modules listed here are availble in Haskell's standard library, and I'll discuss each in turn as we use it during the walkthrough.  The module name is the first part with the specific imports from that module we use listed individually in the parens.
 
 I see some type declarations right under the import statements but I don't really understand what needs modelling yet, so instead I'm going to skim down and see which actual function is called first when you execute this.  I did promise in the intro I’d do that. This entry-point is significant in any language but in Haskell your whole program is this value - the body of `main` will call some other functions but in Haskell, everything is a pure mathematical transformation. The task is to define `main` so that evaluating it plays a game of Tic Tac Toe with you to fully resolve. In `Main.hs` this value is also called `main` and lives at the bottom of the file:
-
 
 ```haskell
 -- line 93
@@ -110,13 +109,13 @@ Our main value has the type `IO ()`. Right off the bat we get a taste of some of
 
 I'm going to preface this by saying I am not making this a blog post about Monads if you've heard the good advice about generally running away from those. I do need to talk about them at least a little (we can gloss through most of the details but there’s a `(>>=)` or two just sitting there), and they're really not a scary thing at all. This is the super simple shakedown, and it's only a shakedown because I thought it sounded good after "super simple".
 
-IO is a monad. In Haskell, Monad is a design pattern that allows us to imbue simpler types with some higher-order functionality that strictly adheres to a set of laws in order to compose them with more flexibility than a pure functional model would afford.  I'll unpack this below.  This pattern is not specific to Haskell, you can write monadic code in almost any language, but the Haskell compiler is able to verify these "monad laws" for us at compile time due to its powerful typeclass system and comes with a number of built-in instances for various useful types - though you could absolutely approximate the pattern in any language with facilities for generic programming.  I'll talk more about what typeclasses and instances are later - for know, know that Haskell has a concept of "categories of types" in can enforce, one such category is "Monad".  Our whole program here is an `IO ()` monad.
+IO is a monad. In Haskell, Monad is a design pattern that allows us to imbue simpler types with some higher-order functionality that strictly adheres to a set of laws in order to compose them with more flexibility than a pure functional model would afford.  I'll unpack this below.  This pattern is not specific to Haskell, but the Haskell compiler is able to verify these "monad laws" for us at compile time due to its powerful typeclass system and comes with a number of built-in instances for various useful types - though you could absolutely approximate the pattern in any language with facilities for generic programming.  I'll talk more about what typeclasses and instances are later - for know, know that Haskell has a concept of "categories of types" on top of just regular types which it can enforce, and one such category is "Monad".  Our whole program here is an `IO ()` monad.
 
 As we’ve stated, Haskell is a functional programming language which is really a rather broad category of languages that emphasise a style of programming in which the function is the basic unit of computation. In Haskell this is further constrained by demanding that every function be a pure function. If you're not familiar with the terminology "pure" means that the function does not rely upon or act on values outside of its own body. Put another way, the function will always return the same output for a given input because there is nothing else the output depends on and you're guaranteed that nothing outside of itself will change in the course of running it. The entire result of the computation is 100% determined by the arguments themselves.  This maps a lot more closely to the *mathematical* concept of a "function".  In most languages, what we call a "function" is more accurately a "subroutine", which may or may not be effectful.  Haskell has no such concept.  The savvy among you might already be asking "but wait! There are all kinds of things a function might want to do outside of itself. How about printing a letter to the screen or responding to any external input?" To which Haskell says "Oh, shoot. We hadn't thought of that. Pack it up!" Good post everyone.
 
-...Hah! Got you, didn't I. Monads conventiently allow Haskell to get around this little technicality of actually having to be useful.  I read this type as "IO Unit". The first part means it's of type IO, so it does something with IO (Input/Output). But this is Haskell, and we need to know what type this monad returns so that we can use it within our typed functional program (spoiler alert: specifically within other monads.) Our compiler is just doing it's happy ol' thing evaluating values by executing functions as it sees them, we've got to keep the big computation rolling! "Doing IO" isn't a type, so Haskell has something called the IO Monad. For this program right now what you need to know is that an IO monad like main will do something with IO in its body but also evaluates to something in the context of your purely functional program. The Monad is a way of encapsulating that idea - whatever it does will happen inside of it and then you get this second type back. A monad can be thought of as an "action" or "computation." It isn't the action itself, it's just the concept of carrying out that action. It's a noun through and through, just a "thing" we can pass around in our program (NOT a function, though functions can return Monads), but it's definitely a little weird at first. Monads turn out to be a great way to compose functionality without sacrificing that sweet, saucy purity.
+...Hah! Got you, didn't I. Monads conventiently allow Haskell to get around this little technicality of actually having to be useful.  I read this type as "IO Unit". The first part means it's of type IO, so it does something with IO (Input/Output). But this is Haskell, and we need to know what type this monad returns so that we can use it within our typed functional program (spoiler alert: specifically within other monads.) Our compiler is just doing it's happy ol' thing evaluating values by executing functions as it sees them, we've got to keep the big computation rolling! "Doing IO" isn't a type, so Haskell has something called the IO Monad. An IO monad like main will do something with IO in its body but also evaluates to something in the context of your purely functional program. The Monad is a way of encapsulating that idea - whatever it does will happen inside of it and then you get this second type back, still wrapped up as an `IO something`. A monad can be thought of as an "action" or "computation." It isn't the action itself, it's just the concept of carrying out that action. It's a noun through and through, just a "thing" we can pass around in our program (NOT a function, though functions can return Monads), but it's definitely a little weird at first. Monads turn out to be a great way to compose functionality without sacrificing that sweet, saucy purity.
 
-That probably doesn’t sit well with you.  One possible reason is that it’s a bald-faced lie, or at least a gross over-simplification.  The Monad structure is allowing us to contextualize the world outside the program in a really handy way and pass it around, and building up how that’s working out in Haskell is both a cool exericse to step through yourself and completely outside the scope of this tutorial.  It's best left to somebody who knows a lot more about what they’re talking about, and not at all on a need-to-know basis to utilize monadic IO.  Here, we’re using it to tag every single part of our program that does any IO - it helps me think of that `IO` part as a phantom parameter you can’t use that’s representing the entire world outside our Haskell program.  It’s not precisely what’s going on, but its not completely unlike it either!  This pattern allows us to keep our “100% of the result of this function is determined by the arguments themselves” constraint and still interact with a user while still writing clean, easy-to-follow code.
+That probably doesn’t sit well with you.  One possible reason is that it’s a bald-faced lie or at least a gross over-simplification.  The Monad structure is allowing us to contextualize the world outside the program in a really handy way and pass it around.  Building up how that’s working out in Haskell is both a cool exericse to step through yourself and completely outside the scope of this tutorial.  It's best left to somebody who knows a lot more about what they’re talking about, and not at all on a need-to-know basis to utilize monadic IO.  Here, we’re using it to tag every single part of our program that does any IO - it helps me think of that `IO` part as a phantom parameter you can’t use that’s representing the entire world outside our Haskell program.  It’s not precisely what’s going on but its not completely unlike it either!  This pattern allows us to keep our “100% of the result of this function is determined by the arguments themselves” constraint and still interact with a user while still writing clean, easy-to-follow code.
 
 For our use in this program, the IO Monad is the (slightly confusing) type of "doing input and/or output" and it will yield a thing when it’s done. The type it yields is the second term. For main, we don't have anything, so we return something of type `()`, the empty tuple (there is only one possible value of type `()`, which is `()` - the empty tuple itself). Putting them together, we have our type `IO ()`. This is akin to `void` in C/C++, or, well, `unit` or `()` in a bunch of different languages. Zilch.
 
@@ -339,15 +338,15 @@ See what happened there?  We processed the one and dropped it so our collection 
 
 When a recursive function tries to recur on an empty list it knows it's done and returns the final value - in this case `15`.  We've managed to iterate without looping!  We were able to reuse the same exact function over and over again while only changing what we pass in based on the output of the previous run.  Recursion, yo.
 
-If this sounds outrageously inefficient, calling loads and loads of functions all the time with very similar values, you're correct.  Haskell performs something called "[tail-call](https://en.wikipedia.org/wiki/Tail_call) optimization" which I won't detail here but essentially means that instead of allocating a new stack frame for each successive call it's able to reuse the same stack frame and substitute the new vals and then just jump execution back up, `GOTO`-style.  If you're not familiar with stack frames we're getting way beyond the scope of this post - it's not required knowledge here but interesting in general and important to understand if you'd like to use a functional language in anger.  I recommend you do some poking around!
+If this sounds outrageously inefficient, calling loads and loads of functions all the time with very similar values, well, it is.  To mitigate that overhead, Haskell performs something called "[tail-call](https://en.wikipedia.org/wiki/Tail_call) optimization" which I won't detail here but essentially means that instead of allocating a new stack frame for each successive call it's able to reuse the same stack frame and substitute the new vals and then just jump execution back up, `GOTO`-style, provided the function recurs in "tail position", which means it's the last part of the function to execute.  If you're not familiar with stack frames we're getting way beyond the scope of this post - it's not required knowledge here but interesting in general and important to understand if you'd like to use a functional language in anger.  In toy programs, the elegant functional solutions are generally fine, but as your apps scale it can start to cause problems, and languages which allow a more hybrid style generally recommend you fall back to more imperative patterns at that point.  A good old `for` loop will as a rule of thumb perform better on large amounts of data than a one-liner using a `forEach` or something similar - sometimes by orders of magnitude.  In Haskell, dealing with these performance problems involves other sorts of patterns as well, as there's no `for` loop to speak of.  I recommend you do some poking around!
 
 As an aside this example could have been rewritten: `addEmUp = foldr (+) 0` - if the argument is the final term in the definition and the argument list it can be dropped.  This process is known as an [eta-reduction](https://en.wikipedia.org/wiki/Lambda_calculus#%CE%B7-conversion) in the lambda calculus lingo.  The compiler instead sees this definition as a curried function expecting one more value.  If it gets called with that value it will fully evaluate the expression.
 
 ### The `Show` Must Go On
 
-That digression got a little nuts, but now we're armed to dive in to this bigger, messier fold.  We know its going to do the same basic type of thing as `addEmUp`.  So the first thing to look for is those three elements we know we'll need: the processing function, the starting value to accumulate in to, and the collection to process.  
+That digression got a little nuts but now we're armed to dive in to this bigger, messier fold.  We know its going to do the same basic type of thing as `addEmUp`.  The first thing to look for is those three elements we know we'll need: the processing function, the starting value to use as an accumulator, and the collection to process.  
 
-The final part, the collection, is easy.  Remembering that `$` is function application, we know we're going to apply this fold to `withinidicesFrom 1 cs`.   We know `cs` from the argument list is our list of cells: `Board cs`.  Then we just call a helper function:
+The final part - the collection - is easy.  Remembering that `$` is function application we know we're going to apply this fold to `withinidicesFrom 1 cs`.   We know `cs` from the argument list is our list of cells: `Board cs`.  Then we just call a helper function:
 
 ```haskell
 -- line 19
@@ -355,39 +354,50 @@ withIndicesFrom :: Int -> [a] -> [(Int, a)]
 withIndicesFrom n = zip [n..]
 ```
 
-This is really just an alias to attach a more domain-specific semantic name to the general function `zip`.  Given two collections, `[a]` and `[b]`, `zip` gives you back a single collection `[(a, b)]`.  This alias just defines the first term of the zip.  You might notice the argument list doesn't match up with our type declaration - we're expecting two arguments, an `Int` and some list, but only have one below.  This is an example of the "eta-reduction" I mentioned earlier - the second argument, namely the list to zip with, appears last in the argument list and the function body, so we drop it from both.  The fully specified version would read:
+This is just an alias to attach a more domain-specific semantic name to the general function `zip`.  Given two collections, `[a]` and `[b]`, `zip` gives you back a single collection `[(a, b)]`:
+
+TODO actually run this and make sure it looks like what you think it looks like
+
+```haskell
+Prelude> let listA = [1, 2, 3]
+Prelude> let listB = ["a", "b", "c"]
+Prelude> zip listA listB
+-- [(1, "a"), (2, "b"), (3, "c")]
+```
+
+This alias just defines the first term to pass to `zip`.  You might notice the argument list doesn't match up with our type declaration - we're expecting two arguments, an `Int` and some list, but only have one below.  This is an example of the "eta-reduction" I mentioned earlier - the second argument, namely the list to zip with, appears last in the argument list and the function body so we drop it from both.  The fully specified version would read:
 
 ```haskell
 withIndicesFrom :: Int -> [a] -> [(Int, a)]
 withIndicesFrom n cs = zip [n..] cs
 ```
 
-The type isn't any different, so always look for the types if you get confused.  They'll tell you what's up.
+The type isn't any different so always look for the types if you get confused.  They'll tell you what's up.
 
 We're using the argument to define the beginning of a range `[n..]`, that is, `[n, n + 1, n + 2, n + 3, ...]`.  to zip with, which will have the effect of attaching an index to each element in the list.  That's all.
 
 #### A Brief Digression on Laziness
 
-This function brushed up on another super-cool property of Haskell that I haven't made much use of in this program, but is too neat to just blow by.
+This function brushed up on another super-cool property of Haskell that I haven't made much use of in this program but is too neat to just blow by.
 
-You may notice that the seemingly-innocuous expression `[n..]` doesn't specify a top value.  What we've done, then, is defined an *infinite list*, starting at `n` and just going and going.
+You may notice that the seemingly-innocuous expression `[n..]` doesn't specify a top value.  What we've done, then, is defined an *infinite list* starting at `n` and just going and going.
 
-In most programming languages, this is quite obviously not ok.  The process would drop everything else and build this infinite list until it blows the stack and crashes, resulting in a pretty shit game.  Well, more shit.  Haskell, on the other hand, employs *lazy* evaluation semantics.  When the compiler passes through, it's perfectly content to leave that `[n..]` alone until it needs to begin the expansion - and even then, it only expands *as-needed*.  In the case of `withIndicesFrom`, the argument we pass it will be finite, which if you need a refresher, is not as big as infinite.  When we hit the last value of that collection to pass into `zip`, then we're good to go - no need to keep drilling our way through `[n..]` for indices we won't use.  Haskell just leaves it wherever we are and moves on.
+In most programming languages this is quite obviously not ok.  The process would drop everything else and build this infinite list until it blows the stack and crashes resulting in a pretty shit game.  Well, more shit at least.  Haskell, on the other hand, employs *lazy* evaluation semantics.  When the compiler passes through it's perfectly content to leave that `[n..]` alone (technically it will pre-process everything to [weak head normal form](https://wiki.haskell.org/Weak_head_normal_form)) until it needs to begin the expansion - and even then it only expands *as-needed*.  In the case of `withIndicesFrom` the argument we pass it will be finite which, if you need a refresher, is smaller than infinite.  When we hit the last value of that collection to pass into `zip` we're good to go - no need to keep drilling our way through `[n..]` for indices we won't use.  Haskell just leaves it unevaluated wherever we are and moves on.
 
-This is a pretty incredible property that allows for all kinds of patterns not possible in strict-evaluation languages, but does have the side effect of making some perfomrance characterists difficult to reason about.  It's a good thing to keep in mind when writing Haskell.
+This is a pretty incredible property that allows for all kinds of patterns not possible in strict-evaluation languages but does have the side effect of making some performance characterists difficult to reason about, as with recursion.  It's a good thing to keep in mind when writing Haskell.
 
 #### Back to work
 
-Moving back to the code!  As a reminder, here's the first line of our `show` definition:
+Moving back to the code!  As a reminder here's the first line of our `show` definition:
 
 ```haskell
 -- line 16
 show (Board cs) = foldr spaceEachThird [].withIndicesFrom 1.fmap showCell $ withIndicesFrom 1 cs
 ```
 
-So, we do have a fold, but it's the *final* part of a larger *composed* function.  The composition operater in Haskell is `.`.  This particular specimen is composed of three different parts.  Writing `a.b.c x` is like writing `a(b(c(x)))`.  It's much less noisy.
+We do have a fold, but it's the *final* part of a larger *composed* function.  The composition operater in Haskell is `.`.  This particular specimen is composed of three different parts.  Writing `a.b.c x` is like writing `a(b(c(x)))`.  It's much less noisy.
 
-Our first part, `fmap showCell`, is going to call `showCell` on each cell in our indexed list of cells `[(0, Nothing), (1, Just Human), (2, Nothing)...]`  Lets look at `showCell`:
+Our first part, `fmap showCell`, is going to call `showCell` on each cell in our indexed list of cells `[(0, Nothing), (1, Just Human), (2, Nothing)...]` and return the result.  Lets look at `showCell`:
 
 ```haskell
 -- line 22
@@ -397,35 +407,30 @@ showCell (_, (Just Human))    = " X "
 showCell (_, (Just Computer)) = " O "
 ```
 
-This function has been written to take one of our conveniently pre-indexed cells and just boil it down to a string.  We actually define the function three times - the first one with an argument pattern that matches how it's called will be executed.  Again, cool stuff!  A few other programming languages I've tried can do this sort of syntax too and it's easy to get spoiled.  In this case, there are just three possible values for any given cell, having been defined as a `Maybe Player`.  We have a separate choice for each - if nobody's played yet, we `show` the index, and if it's got a player we return the proper character.
+This function has been written to take one of our conveniently pre-indexed cells and just boil it down to a string.  We actually define the function three times - the first definition with an argument pattern that matches how it's called will be executed.  Again, cool stuff!  A few other programming languages I've tried can do this sort of syntax too and it's easy to get spoiled.  In this case there are just three possible values for any given cell, having been defined as a `Maybe Player`.  We have a separate choice for each - if nobody's played yet we `show` the index and if it's got a player we return the proper character.
 
-This is only part of the battle though!  This gives something like `[" 1 ", " X ", " 3 ", " O ", ...]`.  The second part of our composed function calls our new friend `withIndicesFrom` again to retain our indices (blech, reading old code is always a little grimey), so we're back up at `[(1, " 1 "), (2, " X "), (3, " 3 "), (4, " O "), ...]`.
+This is only part of the battle though!  This gives something like `[" 1 ", " X ", " 3 ", " O ", ...]`.  The second part of our composed function calls our new friend `withIndicesFrom` again to retain our indices so we're back up at `[(1, " 1 "), (2, " X "), (3, " 3 "), (4, " O "), ...]`.   Bonus points if you can refactor this to ony call `withIndicesFrom` once, like I should have!
 
 Finally, we get to the last outer function: `foldr spaceEachThird []`.  This whole part is the final outer function.  In a C-like language, we might have written this:
 
 ```c
-foldr(spaceEachThird,
-      [],
-      withIndicesFrom(1,
-                      showCell(/* instead of the $ in Haskell, we wrap it in parens */
-                               withIndicesFrom(1, cs))))
+foldr(spaceEachThird, [], withIndicesFrom(1, showCell(withIndicesFrom(1, cs))))
 ```
 
-That means that now we have our collection to fold over - it's the result of everything up to here.   Our base accumulator is just `[]`, the empty list.  The missing piece is our function to fold in:
-
+That means that now we have our collection to fold over - it's the result of everything up to here.   Our base accumulator is just `[]` - the empty list.  The missing piece is our function to fold in:
 
 ```haskell
 -- line 17
 where spaceEachThird a = (++) (bool (snd a) (snd a ++ "\n") (fst a `rem` 3 == 0))
 ```
 
-The `where` just means we're defining `spaceEachThird` locally for this function only - it isn't needed outside of this exact context.  We could have defined it inline using Haskell's anonymous function syntax (`\x -> x + 1`), but even I must have decided that was too hard to read and split it out.
+The `where` just means we're defining `spaceEachThird` locally for this function only - it isn't needed outside of this exact context.  We could have defined it inline using Haskell's anonymous function syntax (`\x -> x + 1`) but even I must have decided that was too hard to read and split it out.
 
-`spaceEachThird` has been defined as taking a single argument, `a`.  In this case, `a` is going to be our current cell - conveniently it matches what we've been using as a stand-in type.  We know the processor acts on two input values because it's type `(a -> r -> r)`, and the other one is our accumulator, so in our definition it's going to look like we're missing an argument.  It's going to be the accumulator, which is just `[]` at the beginning.
+`spaceEachThird` has been defined as taking a single argument `a`.  In this case `a` is going to be our current cell - conveniently it matches what we've been using as a stand-in type.  We know the processor acts on two input values because it has type `(a -> r -> r)`, and the other one is our accumulator, so in our definition it's going to look like we're missing an argument.  That "missing" argument is the accumulator, which is just `[]` at the beginning.
 
-The first part of the definition is `(++)` is concatenation.  There's a clue to where our other type goes - we're going to have whatever we're doing with `a`, the active cell, on one side, and it's going to get concatenated to the accumulator.  That makes sense - it's kind of like adding an `Int` to the accumulator.  The accumulator will now hold information from both operands.  What on earth are we adding, though?
+The first part of the definition is `(++)`, or concatenation.  There's a clue to where our other type goes - we're going to have whatever we're doing with `a`, the active cell, on one side, and it's going to get concatenated to the accumulator.  That makes sense - it's kind of like adding an `Int` to the accumulator.  The accumulator will now hold information from both operands.  What on earth are we adding, though?
 
-I've grabbed the `bool` function from `Data.Bool` and it's really just some control flow.  From [Hoogle](https://hackage.haskell.org/package/base-4.11.1.0/docs/Data-Bool.html): `bool :: a -> a -> Bool -> a`.  This is just a concise way to express an `if` statement with two branches, not unlike the ternary `?` in some other languages with the arguments reversed.  You give it the two potential outcomes first, the first argument being the `False` case and the second being if its `True`, followed by the predicate.  So `spaceEachThird` is just testing the final argument and using `(++)` to concatenate middle one to the accumulator if it checks out, and otherwise the first one.  `(is the index evenly divisible by 3?) ? "shove a newline on me\n" : "just keep me as is"`.  The two arguments are straightforward enough - the `True` case simply inserts a newline character `\n` to the cell's string, which is the second/`snd` value in the list item.  The predicate isn't to hard to understand either - the backticks make `rem` remainder function into an infix function, and we're using `fst` to get just the index of the cell - every third cell, this will be true, so we'll start a new line.  Now we get our flat list nicely squared away.
+I've grabbed the `bool` function from `Data.Bool` and it's really just some control flow.  From [Hoogle](https://hackage.haskell.org/package/base-4.11.1.0/docs/Data-Bool.html): `bool :: a -> a -> Bool -> a`.  This is just a concise way to express an `if` statement with two branches, not unlike the ternary `?` in some other languages with the arguments reversed.  You give it the two potential outcomes first, the first argument being the `False` case and the second being if its `True`, followed by the predicate.  So `spaceEachThird` is just testing the final argument and using `(++)` to concatenate the middle one to the accumulator if it checks out and otherwise the first one.  Put in pseudo-something-JS-like, `(is the index evenly divisible by 3?) ? "shove a newline on me\n" : "just keep me as is"`.  The two arguments are straightforward enough - the `True` case simply inserts a newline character `\n` to the cell's string which is the second/`snd` value in the list item.  The predicate isn't to hard to understand either - the backticks make the `rem` remainder function into an infix function and we're using `fst` to get just the index of the cell - every third cell this will be true, so we'll start a new line.  Now we get our flat 1-D list of nine cells nicely squared away (nyuk) and printed as 3 rows of 3.
 
 ### Gathering Input
 
@@ -444,6 +449,7 @@ Immediately following, we've got `n <- getLine`.  This just says we should wait 
 Now we get to the big `case` statement of `runGame`.  This is where we appropriately dispatch an action based on what the user entered.  This control flow construct is not at all dissimilar to a `switch` in other languages - more similar to a `match`, actually, in terms of expressive power.  We're going to match the value we just received from the user against a few patterns to see how to handle it.
 
 We'll start with the outer layer:
+
 ```haskell
 -- line 82
 case n of
@@ -501,7 +507,7 @@ We initialized our board to a list of `Nothing`s, so the first time through this
 
 HOWEVER!  If `openCell` comes back `true`, we've finally done it - we've ensured the value passed to `n` from stdin is a value we can meaningfully use as the player's next move.  Hot digggity dog!
 
-THe full `then` block reads: 
+THe full `then` block reads:
 
 ```haskell
 handleInput board n' >>= compTurn >>= runGame
