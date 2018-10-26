@@ -442,11 +442,11 @@ putStr "Your move: "
 hFlush stdout
 ```
 
-`putStr` is going to simply send its input to stdout, and `hFlush` flushs the stdout buffer (ensuring the full string is printed out) before advancing to the next instruction.
+`putStr` is going to simply send its input to stdout and `hFlush` flushes the stdout buffer (ensuring the full string is printed out) before advancing to the next instruction.
 
-Immediately following, we've got `n <- getLine`.  This just says we should wait for stdin, and when we get a `\n`, store the contents of the line entered to a local binding `n`.  We can do this inside of our `do` block so that the value passed in is available to the rest of the function.  As soon as the user enters a line of text and hits enter, we'll move on.
+Immediately following, we've got `n <- getLine`.  `getLine` waits for stdin and returns the contents when we get a `\n`, which we store to a local binding `n`.  We can do this inside of our `do` block so that the value passed in is available to the rest of the function.  As soon as the user enters a line of text and hits enter, we'll move on.
 
-Now we get to the big `case` statement of `runGame`.  This is where we appropriately dispatch an action based on what the user entered.  This control flow construct is not at all dissimilar to a `switch` in other languages - more similar to a `match`, actually, in terms of expressive power.  We're going to match the value we just received from the user against a few patterns to see how to handle it.
+Now we get to the big `case` statement of `runGame`.  This is where we appropriately choose an action based on what the user entered.  This control flow construct is not at all dissimilar to a `switch` in other languages - more similar to a `match`, actually, in terms of expressive power.  We're going to match the value we just received from the user against a few patterns to see how to handle it.
 
 We'll start with the outer layer:
 
@@ -459,9 +459,21 @@ case n of
     _   -> putStrLn "Only one digit allowed!"
 ```
 
-This syntax just checks if our input `n` consists of a single character.  TODO EXPLAIN THIS A LITTLE BETTER.  If it does, we'll keep it and do stuff, and if not we'll lightly admonish the idiot at the keyboard with a `putStrLn` call - this is a `putStr` that includes a trailing newline.  I mean, honestly, don't you know how to play TicTacToe?   This is the last line of our function - but it's all wrapped up in a `forever`, so if that does happen we'll just take it again from the top of `runGame` until the user gives us something we can work with.[^5]
+This syntax just checks if our input `n` consists of a single character.  If it does, we'll keep it and do stuff, and if not we'll lightly admonish the idiot at the keyboard with a `putStrLn` call - this is a `putStr` that includes a trailing newline.  
 
-If, however, the user complied and only passed in a single character, we still have a little work to do:
+That pattern matching works because of how Haskell thinks about lists.  Instead of being an array, they're represented as a series of elements attached to each other (if you've LISP'd, it's a cons cell), with an empty list at the end of the chain - something attached to a list of somethings:
+
+```haskell
+[1, 2, 3, 4, 5] == 1 : 2 : 3 : 4 : 5 : []
+```
+
+This is why recursive functions work so well - it's easy to pull apart lists and detect the base case because they're already sort of pulled apart like that under the hood.  In pattern destructuring syntax you can get at the "head" (first element) and "tail" (everything else) with syntax like `(x:xs)`.  Here `x` is your head (`1`) and `xs` is everything else (`[2, 3, 4, 5]`).  You can get the first two with something like `x:y:xs`, match a two-element list with `x:y:[]` etc.  All lists in Haskell work like this.
+
+In this example, we're using `[c]` - there's no `:cs` matching the tail.  This means this pattern will only match on a single-element list.
+
+This is the last line of our function - but it's all wrapped up in a `forever`, so if we do get garbage and yell at the user we'll just take it again from the top of `runGame` until the user gives us something we can work with.[^5]
+
+If, however, the user complied and only passed in a single character we still have a little work to do:
 
 ```haskell
 -- line 84
