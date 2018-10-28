@@ -4,15 +4,17 @@ A TicTacTour Without Honor or Humanity
 
 ## The Intro
 
-Haskell is just not that bad.  What can be scary is how different it can be to work with than what you're used to so you hit a lot more walls at the very beginning.  This post is a deep dive into a program that would be trivial
+Haskell is just not that bad.  What can be scary is how different it can be to work with than what you're used to so you hit a lot more walls at the very beginning.  This post is a deep dive into a program that would be trivial to write in something imperative with the aim of demystifying how you'd go about framing the problem in an unfamiliar paradigm.
 
 As opposed to a traditional tutorial this is top-down, let's see what's here sort of deal. I’m going to start with `main`, the first thing run when you execute the program, and will step through every line of code as it's called and explain what's going on.  This is more an exercise in reading Haskell than writing it, but the two skills are not unrelated and hopefully this can help demystify how to do some simple tasks of your own.
 
-## You
+### You
 
 Haskell-curious.  This is written with a baseline understanding of programming in an imperative language assumed, but zero Haskell or functional programming knowledge.  If you think you could implement this simple program in your language of choice, you're good to go.  I'm going to cover why things are the way they are as thoroughly as I can.  If you're brand new to programming and the below program *doesn't* look like something you know how to make, you still should be able to follow me through this!  There might be a little extra research on your part required here and there.   If you're not new to functional programming but are to Haskell, there may be a few headers you can just skip!
 
-## Me
+In case it wasn't already clear, this is pretty introductory stuff, Haskell-wise.  It might be fun to read just to see what you'd do differently, but this code is probably not gonna blow your mind.
+
+### Me
 
 Not a Haskell programmer.  I partially wrote this to psyche myself up about it again, and this program was the biggest thing I made in my little bit of time I spent learning it - almost two years ago.  Actually, I'm a novice programmer in general - reading this old code again and fully explaining it was an educational exercise.  Both writing it the first time and writing this post now taught me a lot about Haskell, so hopefully it can teach some other beginners some stuff about Haskell too!  I think Haskell is really cool, and I want more beginners to play with it no matter what other language you're focusing on for the bulk of your work.  This is a non-stuffy but thorough way to look at a small program you've probably written before in something more familiar.
 
@@ -20,9 +22,9 @@ While I don't believe I'm off the mark with any of the content here, if any Hask
 
 If I've totally turned you off from reading on with *that* impressive bio, it's been a pleasure.  Enjoy your day!
 
-As for intrepid remainder, I think this is gonna be fun.  ¡Vámonos!
+As for the intrepid remainder, I think this is gonna be a good time.  You're gonna learn at least a thing, maybe two things.  You know, good clean fun.  ¡Vámonos!
 
-## The Program
+### The Program
 
 This is a dirt simple Tic-Tac-Toe game played on the command line against a computer opponent that just plays randomly. Fun, right? Hours if not days of entertainment await the lucky user. A project like this is usually my go-to "hello world" in a new language because at the end it demonstrates you can leverage the language's various facilities at least a little, like control flow and IO. For Haskell it was more a "TTFN, world", but the point stands. 
 
