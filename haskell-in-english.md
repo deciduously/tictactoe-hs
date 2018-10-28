@@ -32,7 +32,7 @@ The full source can be found [here](https://github.com/deciduously/tictactoe-hs/
 
 If you'd like to build the code locally you'll need to have `stack` installed.  See the [stack docs](https://docs.haskellstack.org/en/stable/README/) for installation instructions - if you're planning to keep exploring Haskell you'll want this tool.  It will automatically manage your GHC installations and package dependencies.
 
-Once you've got that good to go you can open a terminal in the project directory (just clone this whole repo) and run `stack setup` to install the compiler and dependencies followed by `stack exec ttt` to compile and run the executable or `stack ghci` to open a REPL from which you can interact directly with the functions defined (including `main`).  I recommend the REPL because that way you can also try each individual function on whatever inputs you'd like.  If you tweak `src/Main.hs` you can type `:r` at the prompt to recompile and load the new version (or get yelled at little, depending how you did).  Use `:q` to quit.
+Once you've got that good to go you can open a terminal in the project directory (clone [this repo](https://github.com/deciduously/tictactoe-hs)) and run `stack setup` to install the compiler and dependencies followed by `stack exec ttt` to compile and run the executable or `stack ghci` to open a REPL from which you can interact directly with the functions defined (including `main`).  I recommend the REPL because that way you can also try each individual function on whatever inputs you'd like.  If you tweak `src/Main.hs` you can type `:r` at the prompt to recompile and load the new version (or get yelled at little, depending how you did).  Use `:q` to quit.
 
 Here's a sample game, as executed from the REPL:
 
