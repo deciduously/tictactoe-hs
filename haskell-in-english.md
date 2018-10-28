@@ -6,17 +6,17 @@ A TicTacTour Without Honor or Humanity
 
 Haskell is just not that bad.  What can be scary is how different it can be to work with than what you're used to so you hit a lot more walls at the very beginning.  This post is a deep dive into a program that would be trivial to write in something imperative with the aim of demystifying how you'd go about framing the problem in an unfamiliar paradigm.
 
-As opposed to a traditional tutorial this is top-down, let's see what's here sort of deal. I’m going to start with `main`, the first thing run when you execute the program, and will step through every line of code as it's called and explain what's going on.  This is more an exercise in reading Haskell than writing it, but the two skills are not unrelated and hopefully this can help demystify how to do some simple tasks of your own.
+As opposed to a traditional tutorial where we build the program step by step this is a top-down, let's see what's here sort of deal. I’m going to start with `main`, the first thing run when you execute the program, and will step through every line of code as it's called and explain what's going on.  Thus, this is more an exercise in reading Haskell than writing it but the two skills are not unrelated and hopefully this can help demystify how to do some simple tasks of your own, as well as feel more equipped to appreach larger Haskell examples.
 
 ### You
 
-Haskell-curious.  This is written with a baseline understanding of programming in an imperative language assumed, but zero Haskell or functional programming knowledge.  If you think you could implement this simple program in your language of choice, you're good to go.  I'm going to cover why things are the way they are as thoroughly as I can.  If you're brand new to programming and the below program *doesn't* look like something you know how to make, you still should be able to follow me through this!  There might be a little extra research on your part required here and there.   If you're not new to functional programming but are to Haskell, there may be a few headers you can just skip!
+Haskell-curious.  This is written with a baseline understanding of programming in an imperative language assumed, but zero Haskell or functional programming knowledge.  If you think you could implement this program in your language of choice, you're good to go.  I'm going to cover why things are the way they are as thoroughly as I can.  If you're brand new to programming and the below program *doesn't* look like something you know how to make, you still should be able to follow me through this, albeit with more effort!  There might be a little extra research on your part required here and there.   If you're not new to functional programming but are to Haskell, there may be a few headers you can just skip.
 
-In case it wasn't already clear, this is pretty introductory stuff, Haskell-wise.  It might be fun to read just to see what you'd do differently, but this code is probably not gonna blow your mind.
+In case it wasn't already clear, this is pretty introductory stuff, Haskell-wise.  If you're already well-versed in the basics it might be fun to read just to see what you'd do differently, but this implementation is probably not gonna blow your mind or anything - in fact, I want to see yours!
 
 ### Me
 
-Not a Haskell programmer.  I partially wrote this to psyche myself up about it again, and this program was the biggest thing I made in my little bit of time I spent learning it - almost two years ago.  Actually, I'm a novice programmer in general - reading this old code again and fully explaining it was an educational exercise.  Both writing it the first time and writing this post now taught me a lot about Haskell, so hopefully it can teach some other beginners some stuff about Haskell too!  I think Haskell is really cool, and I want more beginners to play with it no matter what other language you're focusing on for the bulk of your work.  This is a non-stuffy but thorough way to look at a small program you've probably written before in something more familiar.
+Not a Haskell programmer.  I partially wrote this to psyche myself up about it again and this particular program was the biggest thing I made in my little bit of time I spent learning it a year and a half ago... you know, in the interest of full disclosure.  I'm no expert in general - reading this old code again and fully explaining it was an educational exercise.  Both writing it the first time and writing this post now taught me a lot about Haskell, so hopefully it can teach some other beginners some stuff about Haskell too!  I think Haskell is really cool and I want more beginners to play with it no matter what other language you're focusing on for the bulk of your work.  This is a non-stuffy but (overly?) thorough way to look at a small program you've probably written before in something more familiar.
 
 While I don't believe I'm off the mark with any of the content here, if any Haskell (or otherwise) programmers notice something egregious please let me know at ben@deciduously.com!
 
@@ -30,7 +30,9 @@ This is a dirt simple Tic-Tac-Toe game played on the command line against a comp
 
 The full source can be found [here](https://github.com/deciduously/tictactoe-hs/blob/master/src/Main.hs), the entirety of which will appear in snippet-form below.
 
-If you have `stack` installed you can open a terminal in the project directory and run the command `stack exec ttt` to compile and run the executable or `stack ghci` to open a REPL from which you can interact directly with the functions defined (including main).  See the [stack docs](https://docs.haskellstack.org/en/stable/README/) for installation instructions - if you're planning to keep exploring Haskell you'll want this tool.  It will automatically manage your GHC installations and package dependencies.
+If you'd like to build the code locally you'll need to have `stack` installed.  See the [stack docs](https://docs.haskellstack.org/en/stable/README/) for installation instructions - if you're planning to keep exploring Haskell you'll want this tool.  It will automatically manage your GHC installations and package dependencies.
+
+Once you've got that good to go you can open a terminal in the project directory (just clone this whole repo) and run `stack setup` to install the compiler and dependencies followed by `stack exec ttt` to compile and run the executable or `stack ghci` to open a REPL from which you can interact directly with the functions defined (including main).  I recommend the REPL because that way you can also try each individual function on whatever inputs you'd like.  If you tweak `src/Main.hs` you can type `:r` at the prompt to recompile and load the new version (or get yelled at little, depending how you did).
 
 Here's a sample game, as executed from the REPL:
 
@@ -76,17 +78,19 @@ Your move: 7
  X  O  O
 
 Human won!
+*** Exception: ExitSuccess
+*Main>
 ```
 
-Suck it random number generator.
+Suck it, random number generator.
 
 ## The Good Stuff
 
 ### First steps
 
-Haskell programs are organized into modules.  If you’re coming from an object-oriented world, it’s not quite analogous to a class - it’s more a way of describing a namespace of types. In this way you do encapsulate functionality, but not quite as rigidly as a class does as a “blueprint” for an object.  Each module consists of “entities” like functions and types, which can be imported into other modules for use.
+Haskell programs are organized into modules.  If you’re coming from an object-oriented world, it’s not quite analogous to a class - it’s more just a way of describing a namespace. In this way you do encapsulate functionality, but not quite as rigidly as a class does as a “blueprint” for an object.  Each module consists of “entities” like functions and types, which can be imported into other modules for use.
 
-Opening up Main.hs, we see the following declarations:
+Opening up Main.hs we see the following declarations:
 
 ```haskell
 module Main where
@@ -101,9 +105,9 @@ import           System.IO     (hFlush, stdout)
 import           System.Random (randomRIO)
 ```
 
-The module is the first term, followed by the functions we're importing. This program only has the one module, but if there were more Main would be a sensible place to start looking for our program entry.  All other modules listed here are availble in Haskell's standard library, and I'll discuss each in turn as we use it during the walkthrough.  The module name is the first part with the specific imports from that module we use listed individually in the parens.
+The module is the first term followed by the functions we're importing. This program only has the one module, but if there were more Main would be a sensible place to start looking for our program entry.  All other modules listed here are available in Haskell's standard library and I'll discuss each in turn as we use it during the walkthrough.  The module name is the first part with the specific imports from that module we use listed individually in the parens.
 
-I see some type declarations right under the import statements but I don't really understand what needs modelling yet, so instead I'm going to skim down and see which actual function is called first when you execute this (I did promise in the intro I’d do that). This entry-point is significant in any language but in Haskell your whole program is this value - the body of `main` will call some other functions but in Haskell, everything is a pure mathematical transformation. The task is to define `main` so that evaluating it plays a game of Tic Tac Toe with you to fully resolve. In `Main.hs` this value is also called `main` and lives at the bottom of the file:
+I see some type declarations right under the import statements but I don't really understand what needs modelling yet, so instead I'm going to skim down and see which actual function is called first when you execute this (I did promise in the intro I’d do that). This entry-point is significant in any language but in Haskell your whole program is this value - the body of `main` will call some other functions but in Haskell everything is a pure mathematical transformation. Your task is to define `main` so that evaluating it plays a game of Tic Tac Toe with you to fully resolve. In `Main.hs` this value is also called `main` and lives at the bottom of the file:
 
 ```haskell
 -- line 93
@@ -113,11 +117,13 @@ main = do
   runGame board
 ```
 
-In Haskell every value has a type. Functions count because they evaluate to values.   The compiler doesn’t need to worry about unexpected mutation and side effects, so every function can simply be viewed as its return value much more than in an imperative language.  Haskell also goes hard on the types in a way that you've likely never come across if languages like Java or C++ are as heavy a type system as you've ever worked with. The compiler is actually magic (no, really, magic) and does not require annotations - it's considered good style for top-level functions in a module but they can be omitted for internal values. However, they are a huge help if you start getting bogged down in compiler errors! A type annotation has the name first, followed by the double colon `::`, followed by the type, and you'll see them all over Haskell code.
+Ok.  I lied a little.  That's a code snippet, look at it.  "Ooh" a little, maybe throw in an "ah".  We'll come back to this in a bit, I promise.  I'm going to unwind a little to talk about what we're working with here, because we're going to fully explain every line and it turns out `main :: IO ()` has some unpacking to do.
 
-Our main value has the type `IO ()`. Right off the bat we get a taste of some of funky fresh Haskell weirdness and I'm actually going to have to digress for a moment to talk more about this type before we dive in. Stay with me, I promise it's just a little bit.
+In Haskell every value has a type. Functions count because they evaluate to values.   The compiler doesn’t need to worry about unexpected mutation and side effects, so every function can simply be viewed as equivalent its return value much more than in an imperative language.  Haskell also goes hard on the types in a way that you've likely never come across if languages like Java, C#, or C++ are as heavy a type system as you've ever worked with. The compiler is actually magic (no, really, *magic*) and does not require annotations - it's considered good style for top-level functions in a module but they can be omitted for internal values. However, they are a huge help if you start getting bogged down in compiler errors! A type annotation has the value's name first, followed by the double colon `::`, followed by the type, and you'll see them all over Haskell code.
 
-#### Setting the scene: A Digression on `IO ()`
+Our main value has the type `IO ()`. Right off the bat we get a taste of some of funky fresh Haskell weirdness.  We have our regular looking typers like `String` and `Int`, but this `IO ()` is our first hint the types are set to "Maximum Cool".  Before we can talk about the logic inside this `IO ()` *thing*, whatever it is, we've got to get to the bottom of what exactly it even is.
+
+#### Setting the scene: `IO ()`
 
 I'm going to preface this by saying I am not making this a blog post about Monads if you've heard the good advice about generally running away from those. I do need to talk about them at least a little (we can gloss through most of the details but there’s a `(>>=)` or two just sitting there), and they're really not a scary thing at all. This is the super simple shakedown, and it's only a shakedown because I thought it sounded good after "super simple".
 
