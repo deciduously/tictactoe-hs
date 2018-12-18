@@ -27,8 +27,8 @@ showCell (_, (Just Computer)) = " O "
 freshBoard :: Board
 freshBoard = Board $ replicate 9 Nothing
 
-openCell :: Board -> Int -> Bool
-openCell (Board b) n = isNothing $ b !! (n - 1)
+isCellOpen :: Board -> Int -> Bool
+isCellOpen (Board b) n = isNothing $ b !! (n - 1)
 
 playCell :: Board -> Int -> Player -> Board
 playCell (Board b) n m = Board $ take (n - 1) b ++ [Just m] ++ drop n b
@@ -47,7 +47,7 @@ handleInput :: Board -> Int -> IO Board
 handleInput board n = do
   let b = playCell board n Human
   checkWin b Human
-  gameOver b
+  checkDraw b
   return b
 
 winStates :: [[Int]]
@@ -64,8 +64,8 @@ checkWin board@(Board b) m =
      putStrLn $ show m ++ " won!"
      exitSuccess
 
-gameOver :: Board -> IO ()
-gameOver board@(Board b) =
+checkDraw :: Board -> IO ()
+checkDraw board@(Board b) =
   when ( all isJust b) $ do
     print board
     putStrLn "Draw!"
@@ -73,7 +73,7 @@ gameOver board@(Board b) =
 
 runGame :: Board -> IO ()
 runGame board = forever $ do
-  gameOver board
+  checkDraw board
   print board
   putStr "Your move: "
   hFlush stdout
@@ -83,7 +83,7 @@ runGame board = forever $ do
       if [c] `elem` map show [(1::Integer)..9]
       then do
           let n' = digitToInt c
-          if openCell board n'
+          if isCellOpen board n'
           then handleInput board n' >>= compTurn >>= runGame
           else putStrLn "That's taken!"
       else putStrLn "1-9 only please"
