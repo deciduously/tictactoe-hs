@@ -47,7 +47,7 @@ handleInput :: Board -> Int -> IO Board
 handleInput board n = do
   let b = playCell board n Human
   checkWin b Human
-  gameOver b
+  checkDraw b
   return b
 
 winStates :: [[Int]]
@@ -64,8 +64,8 @@ checkWin board@(Board b) m =
      putStrLn $ show m ++ " won!"
      exitSuccess
 
-gameOver :: Board -> IO ()
-gameOver board@(Board b) =
+checkDraw :: Board -> IO ()
+checkDraw board@(Board b) =
   when ( all isJust b) $ do
     print board
     putStrLn "Draw!"
@@ -73,7 +73,7 @@ gameOver board@(Board b) =
 
 runGame :: Board -> IO ()
 runGame board = forever $ do
-  gameOver board
+  checkDraw board
   print board
   putStr "Your move: "
   hFlush stdout
