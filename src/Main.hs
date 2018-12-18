@@ -27,8 +27,8 @@ showCell (_, (Just Computer)) = " O "
 freshBoard :: Board
 freshBoard = Board $ replicate 9 Nothing
 
-openCell :: Board -> Int -> Bool
-openCell (Board b) n = isNothing $ b !! (n - 1)
+isCellOpen :: Board -> Int -> Bool
+isCellOpen (Board b) n = isNothing $ b !! (n - 1)
 
 playCell :: Board -> Int -> Player -> Board
 playCell (Board b) n m = Board $ take (n - 1) b ++ [Just m] ++ drop n b
@@ -83,7 +83,7 @@ runGame board = forever $ do
       if [c] `elem` map show [(1::Integer)..9]
       then do
           let n' = digitToInt c
-          if openCell board n'
+          if isCellOpen board n'
           then handleInput board n' >>= compTurn >>= runGame
           else putStrLn "That's taken!"
       else putStrLn "1-9 only please"
