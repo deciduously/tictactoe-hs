@@ -34,11 +34,13 @@ isCellOpen :: Board -> Int -> Bool
 isCellOpen (Board b) n = isNothing $ b !! (n - 1)
 
 playCell :: Board -> Int -> Player -> Board
-playCell (Board b) n m = Board $ take (n - 1) b ++ [Just m] ++ drop n b
+playCell (Board b) n player = Board $ prePlayerCells ++ [Just player] ++ postPlayerCells
+  where prePlayerCells = take (n - 1) b
+        postPlayerCells = drop n b
 
 compTurn :: Board -> IO Board
 compTurn board@(Board b) = do
-  let options = filter (isNothing.snd).withIndicesFrom 1 $ b
+  let options = filter (isNothing . snd) . withIndicesFrom 1 $ b
   r <- randomRIO (0, length options - 1)
   let play = (fst $ options !! r)
   let b2 = playCell board play Computer
@@ -86,7 +88,7 @@ runGame board = forever $ do
       if [c] `elem` map show [(1::Integer)..9]
       then do
           let n' = digitToInt c
-          if isCellOpen board n'
+          if isCellOpen board n'1
           then handleInput board n' >>= compTurn >>= runGame
           else putStrLn "That's taken!"
       else putStrLn "1-9 only please"
