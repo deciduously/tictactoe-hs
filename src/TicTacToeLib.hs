@@ -13,12 +13,15 @@ newtype Board = Board [Maybe Player]
 data Player = Human | Computer deriving (Eq, Show)
 
 instance Show Board where
-  show (Board cs) = foldr spaceEachThird [].withIndicesFrom 1.fmap showCell $ withIndicesFrom 1 cs
+  show (Board cs) = foldr spaceEachThird [] . withIndicesFrom 1 . fmap showCell $ withIndicesFrom 1 cs
     where spaceEachThird a = (++) (bool (snd a) (snd a ++ "\n") (fst a `rem` 3 == 0))
 
 withIndicesFrom :: Int -> [a] -> [(Int, a)]
 withIndicesFrom n = zip [n..]
 
+-- An empty cell shows its number on the grid,
+-- A play made by a human is represented with a: " X "
+-- and that by a computer with a: " O "
 showCell :: (Int, Maybe Player) -> String
 showCell (n, Nothing)         = " " ++ show n ++ " "
 showCell (_, (Just Human))    = " X "
