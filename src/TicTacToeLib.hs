@@ -48,13 +48,14 @@ compTurn board@(Board b) = do
   checkWin b2 Computer
   return b2
 
-handleInput :: Board -> Int -> IO Board
-handleInput board n = do
+humanTurn :: Board -> Int -> IO Board
+humanTurn board n = do
   let b = playCell board n Human
   checkWin b Human
   checkDraw b
   return b
 
+-- All the states that indicate a win in the game
 winStates :: [[Int]]
 winStates = [[0, 1, 2], [3, 4, 5], [6, 7, 8], [0, 3, 6], [1, 4, 7], [2, 5, 8], [0, 4, 8], [2, 4, 6]]
 
@@ -62,7 +63,7 @@ checkWin :: Board -> Player -> IO ()
 checkWin board@(Board b) m =
   let
     bi = withIndicesFrom 0 b
-    plays = map fst.filter ((Just m==) . snd) $ bi
+    plays = map fst . filter ((Just m ==) . snd) $ bi
   in
    when (foldr ((||) . flip isSubsequenceOf plays) False winStates) $ do
      print board
@@ -88,8 +89,8 @@ runGame board = forever $ do
       if [c] `elem` map show [(1::Integer)..9]
       then do
           let n' = digitToInt c
-          if isCellOpen board n'1
-          then handleInput board n' >>= compTurn >>= runGame
+          if isCellOpen board n' 1
+          then humanTurn board n' >>= compTurn >>= runGame
           else putStrLn "That's taken!"
       else putStrLn "1-9 only please"
     _   -> putStrLn "Only one digit allowed!"
