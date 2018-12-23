@@ -22,7 +22,7 @@ executable ttt
 
 library
   hs-source-dirs:      src
-  exposed-modules:     TicTacToeLib.hs
+  exposed-modules:     TicTacToeLib
   default-language:    Haskell2010
   build-depends:       base >= 4.7 && < 5
                      , random
