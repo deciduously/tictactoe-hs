@@ -89,7 +89,7 @@ runGame board = forever $ do
       if [c] `elem` map show [(1::Integer)..9]
       then do
           let n' = digitToInt c
-          if isCellOpen board n' 1
+          if isCellOpen board n'
           then humanTurn board n' >>= compTurn >>= runGame
           else putStrLn "That's taken!"
       else putStrLn "1-9 only please"
